@@ -12,12 +12,9 @@ tiktoken==0.5.1
 chromadb==0.4.18
 sentence-transformers==2.2.2
 
-# PDF Processing (with OCR)
+# PDF Processing (lightweight - no OCR for faster deployment)
 pypdf2==3.0.1
 pdfplumber==0.10.3
-pymupdf==1.23.8
-pytesseract==0.3.10
-pdf2image==1.16.3
 Pillow==10.1.0
 
 # Excel Processing (for chat transcripts)
