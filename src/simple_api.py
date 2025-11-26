@@ -82,9 +82,13 @@ async def chat(request: ChatRequest):
 @app.get("/webhook/salesiq/test")
 async def test_salesiq_webhook():
     """Test endpoint to verify webhook is accessible"""
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key_status = "configured" if api_key and len(api_key) > 10 else "NOT SET"
+    
     return {
         "status": "ok",
         "message": "SalesIQ webhook endpoint is accessible",
+        "openai_api_key": api_key_status,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -98,6 +102,16 @@ async def salesiq_webhook(request: Request):
         # Log incoming request for debugging
         print(f"[SalesIQ Webhook] Received payload: {payload}")
         
+        # Check if OpenAI API key is set
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key or api_key == "":
+            print("[ERROR] OPENAI_API_KEY not set!")
+            return {
+                "action": "reply",
+                "replies": ["I'm having configuration issues. Please contact support."],
+                "session_id": payload.get("session_id")
+            }
+        
         # Extract data from SalesIQ payload
         session_id = payload.get("session_id") or payload.get("chat_id") or payload.get("visitor_id")
         message = payload.get("message", "")
@@ -106,6 +120,8 @@ async def salesiq_webhook(request: Request):
         visitor = payload.get("visitor", {})
         visitor_name = visitor.get("name") or payload.get("visitor_name", "there")
         visitor_email = visitor.get("email") or payload.get("visitor_email", "")
+        
+        print(f"[SalesIQ Webhook] Session: {session_id}, Message: {message}")
         
         # If no message, return default greeting
         if not message:
@@ -150,6 +166,8 @@ Keep responses brief and actionable. Ask one question at a time if you need more
         # Add conversation history
         messages.extend(conversation_history)
         
+        print(f"[SalesIQ Webhook] Calling OpenAI with {len(messages)} messages...")
+        
         # Get AI response
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
@@ -157,6 +175,8 @@ Keep responses brief and actionable. Ask one question at a time if you need more
             temperature=0.3,
             max_tokens=150  # Shorter responses
         )
+        
+        print(f"[SalesIQ Webhook] OpenAI response received")
         
         ai_response = response.choices[0].message.content.strip()
         
@@ -181,19 +201,37 @@ Keep responses brief and actionable. Ask one question at a time if you need more
         print(f"[SalesIQ Webhook] JSON parse error: {str(e)}")
         return {
             "action": "reply",
-            "replies": ["I didn't receive a message. Can you rephrase?"],
+            "replies": ["I didn't receive a valid message. Can you rephrase?"],
             "session_id": payload.get("session_id") if 'payload' in locals() else None
         }
     except Exception as e:
         # Catch all other errors
-        print(f"[SalesIQ Webhook] Error: {str(e)}")
+        error_msg = str(e)
+        print(f"[SalesIQ Webhook] ERROR: {error_msg}")
+        print(f"[SalesIQ Webhook] Error type: {type(e).__name__}")
         import traceback
         traceback.print_exc()
-        return {
-            "action": "reply",
-            "replies": ["I encountered an error. Please try again or contact support."],
-            "session_id": payload.get("session_id") if 'payload' in locals() else None
-        }
+        
+        # Check for specific OpenAI errors
+        if "api_key" in error_msg.lower() or "authentication" in error_msg.lower():
+            print("[ERROR] OpenAI API key issue detected!")
+            return {
+                "action": "reply",
+                "replies": ["I'm having authentication issues. Please contact support to check the API configuration."],
+                "session_id": payload.get("session_id") if 'payload' in locals() else None
+            }
+        elif "rate_limit" in error_msg.lower():
+            return {
+                "action": "reply",
+                "replies": ["I'm experiencing high traffic. Please try again in a moment."],
+                "session_id": payload.get("session_id") if 'payload' in locals() else None
+            }
+        else:
+            return {
+                "action": "reply",
+                "replies": ["I encountered an error processing your request. Please try again or contact support."],
+                "session_id": payload.get("session_id") if 'payload' in locals() else None
+            }
 
 @app.get("/stats")
 async def get_stats():
