@@ -102,19 +102,26 @@ async def salesiq_webhook(request: Request):
         # Log incoming request for debugging
         print(f"[SalesIQ Webhook] Received payload: {payload}")
         
-        # Check if OpenAI API key is set
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        if not api_key or api_key == "":
-            print("[ERROR] OPENAI_API_KEY not set!")
+        # Check if OpenAI API key is set and valid
+        api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        if not api_key or len(api_key) < 20 or not api_key.startswith("sk-"):
+            print(f"[ERROR] OPENAI_API_KEY not set or invalid! Length: {len(api_key)}, Starts with sk-: {api_key.startswith('sk-') if api_key else False}")
             return {
                 "action": "reply",
-                "replies": ["I'm having configuration issues. Please contact support."],
+                "replies": ["I'm having configuration issues. Please ask an administrator to set the OPENAI_API_KEY in Render."],
                 "session_id": payload.get("session_id")
             }
         
         # Extract data from SalesIQ payload
+        # SalesIQ sends message in different formats
         session_id = payload.get("session_id") or payload.get("chat_id") or payload.get("visitor_id")
-        message = payload.get("message", "")
+        
+        # Extract message - handle nested structure
+        message_obj = payload.get("message", {})
+        if isinstance(message_obj, dict):
+            message = message_obj.get("text", "")
+        else:
+            message = str(message_obj) if message_obj else ""
         
         # Handle visitor object if present
         visitor = payload.get("visitor", {})
