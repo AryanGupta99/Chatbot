@@ -90,7 +90,7 @@ async def test_salesiq_webhook():
 
 @app.post("/webhook/salesiq")
 async def salesiq_webhook(request: Request):
-    """SalesIQ webhook for incoming messages - matches our tested format"""
+    """SalesIQ webhook - returns exact format required by SalesIQ widget"""
     try:
         # Parse payload
         payload = await request.json()
@@ -98,28 +98,25 @@ async def salesiq_webhook(request: Request):
         # Log incoming request for debugging
         print(f"[SalesIQ Webhook] Received payload: {payload}")
         
-        # Extract data from payload
-        chat_id = payload.get("chat_id", "")
-        visitor_id = payload.get("visitor_id", "")
+        # Extract data from SalesIQ payload
+        session_id = payload.get("session_id") or payload.get("chat_id") or payload.get("visitor_id")
         message = payload.get("message", "")
-        visitor_name = payload.get("visitor_name", "Unknown")
-        visitor_email = payload.get("visitor_email", "")
         
+        # Handle visitor object if present
+        visitor = payload.get("visitor", {})
+        visitor_name = visitor.get("name") or payload.get("visitor_name", "there")
+        visitor_email = visitor.get("email") or payload.get("visitor_email", "")
+        
+        # If no message, return default greeting
         if not message:
             return {
-                "status": "success",
-                "message": "Hello! How can I help you today?",
-                "data": {
-                    "ticket_created": False,
-                    "ticket_id": None,
-                    "ticket_number": None,
-                    "escalate": False
-                },
-                "timestamp": datetime.now().isoformat()
+                "action": "reply",
+                "replies": ["Hello! I'm AceBuddy, your IT support assistant. How can I help you today?"],
+                "session_id": session_id
             }
         
         # Get or create session for conversation history
-        session_key = f"salesiq_{chat_id}"
+        session_key = f"salesiq_{session_id}" if session_id else "default"
         if session_key not in sessions:
             sessions[session_key] = []
         
@@ -135,20 +132,18 @@ async def salesiq_webhook(request: Request):
                 "role": "system",
                 "content": """You are AceBuddy, a helpful IT support assistant for ACE Cloud Hosting.
 
-Help users with:
+Provide SHORT, CONCISE responses (1-2 sentences max). No markdown, no code blocks, no newlines.
+
+Help with:
 - QuickBooks Desktop and Enterprise issues
-- Remote Desktop (RDP) connection problems
+- Remote Desktop (RDP) connection problems  
 - Email setup and configuration
 - Server performance and slowness
 - Password resets
 - Printer issues
 - Account access problems
 
-Provide clear, concise, and helpful responses. If you detect urgent issues like server down, account locked, or critical errors, acknowledge the urgency.
-
-For password resets, ask for their username or email.
-For technical issues, ask relevant troubleshooting questions.
-Be friendly and professional."""
+Keep responses brief and actionable. Ask one question at a time if you need more info."""
             }
         ]
         
@@ -160,29 +155,22 @@ Be friendly and professional."""
             model="gpt-4-turbo-preview",
             messages=messages,
             temperature=0.3,
-            max_tokens=500
+            max_tokens=150  # Shorter responses
         )
         
-        ai_response = response.choices[0].message.content
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Remove markdown and newlines for SalesIQ widget
+        ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
         
         # Add assistant response to history
         sessions[session_key].append({"role": "assistant", "content": ai_response})
         
-        # Detect if escalation needed (simple keyword detection)
-        escalate_keywords = ["can't help", "don't know", "contact support", "escalate", "urgent", "critical"]
-        escalate = any(keyword in ai_response.lower() for keyword in escalate_keywords)
-        
-        # Prepare response
+        # Return SalesIQ format
         response_data = {
-            "status": "success",
-            "message": ai_response,
-            "data": {
-                "ticket_created": False,
-                "ticket_id": None,
-                "ticket_number": None,
-                "escalate": escalate
-            },
-            "timestamp": datetime.now().isoformat()
+            "action": "reply",
+            "replies": [ai_response],
+            "session_id": session_id
         }
         
         print(f"[SalesIQ Webhook] Sending response: {response_data}")
@@ -192,19 +180,19 @@ Be friendly and professional."""
         # JSON parsing error
         print(f"[SalesIQ Webhook] JSON parse error: {str(e)}")
         return {
-            "status": "error",
-            "message": "Invalid JSON payload",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "action": "reply",
+            "replies": ["I didn't receive a message. Can you rephrase?"],
+            "session_id": payload.get("session_id") if 'payload' in locals() else None
         }
     except Exception as e:
-        # Catch all other errors and return 200 with error details
+        # Catch all other errors
         print(f"[SalesIQ Webhook] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
-            "status": "error",
-            "message": "I apologize, but I encountered an error processing your message. Please try again or contact support.",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "action": "reply",
+            "replies": ["I encountered an error. Please try again or contact support."],
+            "session_id": payload.get("session_id") if 'payload' in locals() else None
         }
 
 @app.get("/stats")
