@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: acebuddy-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/enhanced_api.py
+    envVars:
+      - key: OPENAI_API_KEY
+        scope: build,runtime
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: 8000
+      - key: PYTHONUNBUFFERED
+        value: 1
