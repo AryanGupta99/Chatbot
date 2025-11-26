@@ -3,9 +3,12 @@ services:
     name: acebuddy-api
     env: python
     plan: free
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python src/enhanced_api.py
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: OPENAI_API_KEY
         scope: build,runtime
       - key: API_HOST
