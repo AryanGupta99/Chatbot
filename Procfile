@@ -1,1 +1,1 @@
-web: python src/enhanced_api.py
+web: python src/simple_api.py
