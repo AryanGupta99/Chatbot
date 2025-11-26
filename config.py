@@ -7,7 +7,7 @@ except ImportError:
 
 class Settings(BaseSettings):
     # OpenAI
-    openai_api_key: str
+    openai_api_key: str = "your_openai_api_key_here"
     openai_model: str = "gpt-4-turbo-preview"
     openai_embedding_model: str = "text-embedding-3-small"
     
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    api_secret_key: str
+    api_secret_key: str = "change-this-secret-key-in-production"
     
     # Zoho
     zoho_webhook_secret: Optional[str] = None
