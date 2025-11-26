@@ -1,0 +1,26 @@
+# Quick Deploy Commands
+
+# Step 1: Commit and push to GitHub
+git add .
+git commit -m "Fixed SalesIQ webhook - all tests passing, ready for production"
+git push origin main
+
+# Step 2: Wait for Render to deploy (5-10 minutes)
+# Watch at: https://dashboard.render.com
+
+# Step 3: Test deployed webhook (replace YOUR-APP-NAME)
+curl https://YOUR-APP-NAME.onrender.com/webhook/salesiq/test
+
+# Step 4: Test with sample message
+curl -X POST https://YOUR-APP-NAME.onrender.com/webhook/salesiq \
+  -H "Content-Type: application/json" \
+  -d '{"chat_id":"test","visitor_id":"v1","message":"Hello","visitor_name":"Test","visitor_email":"test@test.com"}'
+
+# Step 5: Configure in SalesIQ
+# Go to: https://salesiq.zoho.com
+# Settings → Developers → Webhooks
+# URL: https://YOUR-APP-NAME.onrender.com/webhook/salesiq
+# Method: POST
+# Test and Save
+
+# Done! 🚀

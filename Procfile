@@ -1,1 +1,0 @@
-web: python src/simple_api.py

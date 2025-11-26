@@ -23,13 +23,21 @@ class VectorStore:
         
         try:
             self.collection = self.client.get_collection(name=name)
-            print(f"✓ Loaded existing collection: {name}")
+            print(f"[OK] Loaded existing collection: {name}")
         except:
-            self.collection = self.client.create_collection(
-                name=name,
-                metadata={"hnsw:space": "cosine"}
-            )
-            print(f"✓ Created new collection: {name}")
+            try:
+                self.collection = self.client.create_collection(
+                    name=name,
+                    metadata={"hnsw:space": "cosine"}
+                )
+                print(f"[OK] Created new collection: {name}")
+            except Exception as e:
+                # If collection exists, just get it
+                if "already exists" in str(e).lower():
+                    self.collection = self.client.get_collection(name=name)
+                    print(f"[OK] Loaded existing collection: {name}")
+                else:
+                    raise
     
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings using OpenAI"""
@@ -75,7 +83,7 @@ class VectorStore:
             )
             print(f"  Added batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
         
-        print(f"✓ Successfully added {len(chunks)} chunks to vector store")
+        print(f"[OK] Successfully added {len(chunks)} chunks to vector store")
     
     def search(self, query: str, top_k: int = None, filter_dict: Optional[Dict] = None) -> List[Dict[str, Any]]:
         """Search for relevant documents"""

@@ -216,24 +216,62 @@ async def get_stats():
 
 # ============ ZOHO DESK INTEGRATION ENDPOINTS ============
 
+@app.get("/webhook/salesiq/test")
+async def test_salesiq_webhook():
+    """Test endpoint to verify webhook is accessible"""
+    return {
+        "status": "ok",
+        "message": "SalesIQ webhook endpoint is accessible",
+        "timestamp": datetime.now().isoformat()
+    }
+
 @app.post("/webhook/salesiq")
 async def salesiq_webhook(request: Request):
     """SalesIQ webhook for incoming messages"""
     try:
+        # Parse payload
         payload = await request.json()
+        
+        # Log incoming request for debugging
+        print(f"[SalesIQ Webhook] Received payload: {payload}")
+        
+        # Handle the message
         result = salesiq_handler.handle_incoming_message(payload)
         
+        # Always return 200 OK with proper structure
+        response = {
+            "status": "success",
+            "message": result.get("response", "Message processed"),
+            "data": {
+                "ticket_created": result.get("ticket_created", False),
+                "ticket_id": result.get("ticket_id"),
+                "ticket_number": result.get("ticket_number"),
+                "escalate": result.get("escalate", False)
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        print(f"[SalesIQ Webhook] Sending response: {response}")
+        return response
+        
+    except ValueError as e:
+        # JSON parsing error
+        print(f"[SalesIQ Webhook] JSON parse error: {str(e)}")
         return {
-            "status": result.get("status"),
-            "response": result.get("response"),
-            "ticket_created": result.get("ticket_created", False),
-            "ticket_id": result.get("ticket_id"),
-            "ticket_number": result.get("ticket_number"),
-            "escalate": result.get("escalate", False),
+            "status": "error",
+            "message": "Invalid JSON payload",
+            "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Webhook error: {str(e)}")
+        # Catch all other errors and return 200 with error details
+        print(f"[SalesIQ Webhook] Error: {str(e)}")
+        return {
+            "status": "error",
+            "message": "Error processing webhook",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.post("/zoho/ticket/create")
 async def create_zoho_ticket(request: ChatRequest):

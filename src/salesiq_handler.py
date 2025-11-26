@@ -19,14 +19,26 @@ class SalesIQHandler:
     def handle_incoming_message(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming SalesIQ message"""
         try:
+            # Validate payload
+            if not payload:
+                return {
+                    "status": "error",
+                    "error": "Empty payload received",
+                    "response": "Unable to process empty message"
+                }
+            
             chat_id = payload.get("chat_id", "")
             visitor_id = payload.get("visitor_id", "")
             message = payload.get("message", "")
             visitor_email = payload.get("visitor_email", "")
-            visitor_name = payload.get("visitor_name", "")
+            visitor_name = payload.get("visitor_name", "Unknown")
             
             if not message:
-                return {"status": "ignored", "reason": "No message content"}
+                return {
+                    "status": "ignored",
+                    "reason": "No message content",
+                    "response": "No message to process"
+                }
             
             # Get or create session
             session_key = f"salesiq_{chat_id}"
@@ -80,9 +92,13 @@ class SalesIQHandler:
             }
         
         except Exception as e:
+            print(f"[SalesIQ Handler] Error processing message: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return {
                 "status": "error",
-                "error": str(e)
+                "error": str(e),
+                "response": "I apologize, but I encountered an error processing your message. Please try again or contact support."
             }
     
     def _handle_workflow_response(self, result: Dict[str, Any], session: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
