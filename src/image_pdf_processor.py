@@ -8,20 +8,13 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import pdfplumber
 import PyPDF2
-import fitz  # PyMuPDF
 from PIL import Image
 import io
 from datetime import datetime
 
 # OCR support (optional - requires tesseract installation)
-try:
-    import pytesseract
-    from pdf2image import convert_from_path
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-    print("⚠️  OCR not available. Install: pip install pytesseract pdf2image")
-    print("   Also install Tesseract: https://github.com/tesseract-ocr/tesseract")
+OCR_AVAILABLE = False
+print("⚠️  OCR not available in production. Using standard PDF text extraction only.")
 
 class ImagePDFProcessor:
     """Enhanced PDF processor with OCR for image-heavy documents"""
@@ -104,30 +97,8 @@ class ImagePDFProcessor:
     
     def _extract_image_context(self, pdf_path: Path) -> str:
         """Extract context around images (captions, labels, etc.)"""
-        context = ""
-        
-        try:
-            doc = fitz.open(pdf_path)
-            
-            for page_num, page in enumerate(doc):
-                # Get images
-                image_list = page.get_images()
-                
-                if image_list:
-                    # Get text blocks near images
-                    blocks = page.get_text("blocks")
-                    
-                    for img_index, img in enumerate(image_list):
-                        # Try to find nearby text (captions, labels)
-                        nearby_text = self._find_nearby_text(blocks, img_index)
-                        if nearby_text:
-                            context += f"\n[Image {page_num+1}-{img_index+1}]: {nearby_text}\n"
-            
-            doc.close()
-        except Exception as e:
-            print(f"  ⚠️  Image context extraction failed: {e}")
-        
-        return context
+        # Image context extraction disabled in production (requires PyMuPDF)
+        return ""
     
     def _find_nearby_text(self, blocks: List, img_index: int) -> str:
         """Find text blocks near an image"""
