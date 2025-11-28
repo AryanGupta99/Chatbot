@@ -1,11 +1,10 @@
 # Disk Storage & Low Disk Space Guide
 
-## Issue
-C: Drive is running low on space or showing red indicator.
+## When C: Drive Shows Red or Disk is Full
 
-## Step 1: Cleanup Steps (Try These First)
+If your C: Drive is showing red or you're running low on disk space, **try these cleanup steps FIRST before upgrading**:
 
-Before upgrading storage, try these cleanup steps to free up space:
+## Cleanup Steps to Free Up Space
 
 ### Clear Temporary Files
 1. Press Windows Key + R
@@ -43,7 +42,7 @@ Before upgrading storage, try these cleanup steps to free up space:
 2. Look in Downloads, Documents, and Desktop folders
 3. Move or delete files you no longer need
 
-## Step 2: Check Disk Space After Cleanup
+## After Cleanup: Check Your Disk Space
 
 1. Open File Explorer
 2. Click on "This PC" or "My Computer"
@@ -52,9 +51,9 @@ Before upgrading storage, try these cleanup steps to free up space:
 **Note:** If C: Drive is not visible under My Computer, you can check it by:
 - Start > Run > Type "C:" > OK
 
-## Step 3: Storage Upgrade Options
+## If You Still Need More Space: Storage Upgrade Plans
 
-If after cleanup the disk is still showing red or you need more space, here are the available storage upgrade plans:
+After trying the cleanup steps above, if your disk is still showing red or you need more space, we offer these storage upgrade plans:
 
 ### Storage Upgrade Pricing
 - **200GB** – $120/Month
