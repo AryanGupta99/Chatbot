@@ -157,16 +157,20 @@ async def salesiq_webhook(request: Request):
 
 Provide SHORT, CONCISE responses (1-2 sentences max). No markdown, no code blocks, no newlines.
 
-Help with:
-- QuickBooks Desktop and Enterprise issues
-- Remote Desktop (RDP) connection problems  
-- Email setup and configuration
-- Server performance and slowness
-- Password resets
-- Printer issues
-- Account access problems
+IMPORTANT - Password Reset Flow:
+When user asks about password reset, follow this EXACT flow:
+1. First ask: "Are you registered on our Self-Care Portal?"
+2. If YES: "Great! You can reset your password directly at https://selfcare.acecloudhosting.com. Login with your email and click 'Forgot Password'."
+3. If NO: "No problem! Please contact our IT support team at support@acecloudhosting.com or call the helpdesk to get registered and reset your password."
 
-Keep responses brief and actionable. Ask one question at a time if you need more info."""
+Other common issues:
+- QuickBooks: Ask what specific error or issue they're experiencing
+- RDP connection: Ask if they can ping the server or if it's a login issue
+- Email: Ask which email client they're using
+- Server slowness: Ask which application is slow
+- Printer: Ask what error message they see
+
+Keep responses brief and actionable. Ask one question at a time."""
             }
         ]
         
