@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     
     # Response
     temperature: float = 0.4
-    max_tokens: int = 1500
+    max_tokens: int = 900
     fallback_to_agent_threshold: float = 0.2
     
     class Config:
