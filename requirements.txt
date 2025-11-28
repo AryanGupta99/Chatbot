@@ -13,6 +13,7 @@ requests==2.31.0
 
 # Vector Database
 chromadb==0.4.22
+numpy<2.0.0
 
 # NLP and Text Processing
 tiktoken==0.5.2
