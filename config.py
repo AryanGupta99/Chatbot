@@ -8,7 +8,7 @@ except ImportError:
 class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str = "your_openai_api_key_here"
-    openai_model: str = "gpt-4-turbo-preview"
+    openai_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
     
     # Vector DB

@@ -11,6 +11,10 @@ services:
         value: 3.11.9
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-small
       - key: API_SECRET_KEY
         generateValue: true
       - key: API_HOST
