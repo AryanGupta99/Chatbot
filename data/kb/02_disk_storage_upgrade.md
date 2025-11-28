@@ -1,93 +1,94 @@
-# Disk Space Full - Storage Upgrade - AceBuddy Knowledge Base
+# Disk Storage & Low Disk Space Guide
 
 ## Issue
-Customer's storage is running low or full, causing system slowdown or failures.
+C: Drive is running low on space or showing red indicator.
 
-## Symptoms
-- Receiving "Low Disk Space" warning
-- Applications running slowly
-- Cannot save new files
-- System freezing periodically
-- Backup failures
-- Database performance degradation
+## Step 1: Cleanup Steps (Try These First)
 
-## Automated Solution Overview
-The AceBuddy chatbot presents storage upgrade options, captures customer preference, and automatically forwards the request to the Point of Contact (POC) for approval.
+Before upgrading storage, try these cleanup steps to free up space:
 
-## Step-by-Step Solution
+### Clear Temporary Files
+1. Press Windows Key + R
+2. Type `temp` and press Enter
+3. Select all files (Ctrl + A) and delete them
+4. If prompted, skip any files in use
 
-### For Users (via Chatbot)
-1. User initiates chat: "My disk is running low" or "I need more storage"
-2. Chatbot displays available upgrade plans:
-   - 200 GB for $120/month
-   - 100 GB for $60/month
-   - 80 GB for $50/month
-   - 60 GB for $40/month
-   - 40 GB for $28/month
+### Clear Windows Temp Folder
+1. Press Windows Key + R
+2. Type `%temp%` and press Enter
+3. Select all files (Ctrl + A) and delete them
+4. Skip any files that cannot be deleted
 
-3. User selects preferred storage plan
-4. Chatbot captures:
-   - Selected plan (GB and cost)
-   - Current disk usage percentage
-   - Primary use case (accounting data, files, backups, etc.)
-   - Preferred start date
+### Clear Cache Files
+1. Open File Explorer
+2. Navigate to C:\Users\[YourUsername]\AppData\Local\Temp
+3. Delete old files and folders
+4. Empty the Recycle Bin
 
-5. Chatbot automatically emails POC/Account Manager with:
-   - Customer request
-   - Selected plan
-   - Business justification
-   - Approval link/form
+### Disk Cleanup Tool
+1. Right-click on C: Drive
+2. Select Properties
+3. Click "Disk Cleanup" button
+4. Check all boxes (especially "Temporary files" and "Recycle Bin")
+5. Click "Clean up system files" for more options
+6. Click OK to delete files
 
-6. User receives confirmation: "Your storage upgrade request has been sent to [POC Name]. Expected approval: 24-48 hours."
+### Remove Unnecessary Programs
+1. Go to Control Panel > Programs > Programs and Features
+2. Uninstall programs you no longer use
+3. Focus on large applications you don't need
 
-### For Support Team / POC
-1. Receive automated request from chatbot
-2. Review customer selection and current usage
-3. Approve or negotiate plan
-4. Send approval notification to customer
-5. Coordinate with billing/infrastructure team
-6. Provision storage
-7. Update ticket status
+### Check for Large Files
+1. Use File Explorer to identify large files
+2. Look in Downloads, Documents, and Desktop folders
+3. Move or delete files you no longer need
 
-## Storage Recommendations
-- Light users (QB only, <50GB/month): 40-60 GB plan
-- Standard users (QB + files, 50-100GB/month): 80-100 GB plan
-- Heavy users (QB + large backups + archive, >100GB/month): 200 GB plan
+## Step 2: Check Disk Space After Cleanup
 
-## Expected Outcome
-- Storage upgrade request processed in 24-48 hours
-- Customer self-selects plan (reduces negotiation)
-- POC receives pre-filled approval request
-- Clear communication and tracking
-- Proactive capacity management
+1. Open File Explorer
+2. Click on "This PC" or "My Computer"
+3. Check the C: Drive space indicator
 
-## Time Savings
-- Before: 20-30 minutes per request (agent collection, email, follow-up)
-- After: 3-5 minutes per request (POC review only)
-- Annual impact: ~5-8 hours saved per agent per month
+**Note:** If C: Drive is not visible under My Computer, you can check it by:
+- Start > Run > Type "C:" > OK
 
-## Success Criteria
-- Customer receives plan options within 30 seconds
-- Storage upgrade processed within 48 hours of approval
-- Zero follow-ups needed for clarification
-- Billing and provisioning teams receive complete information
+## Step 3: Storage Upgrade Options
 
-## Preventing Disk Full Issues
-1. Monitor disk usage monthly
-2. Archive old files regularly
-3. Delete temporary/backup files not needed
-4. Schedule automatic backups to separate storage
-5. Request proactive upgrade before reaching 85% capacity
+If after cleanup the disk is still showing red or you need more space, here are the available storage upgrade plans:
 
-## Related Topics
-- Server Performance
-- System Maintenance
-- Backup Management
-- Disk Usage Monitoring
+### Storage Upgrade Pricing
+- **200GB** – $120/Month
+- **100GB** – $60/Month
+- **80GB** – $50/Month
+- **60GB** – $40/Month
+- **40GB** – $28/Month
 
-## Troubleshooting
-If storage not increasing after upgrade:
-1. Verify provisioning completed on server
-2. Check if OS needs refresh to recognize new space
-3. Verify system is using new storage
-4. Escalate to infrastructure team if issue persists
+### How to Request Storage Upgrade
+
+We can raise a ticket on the support portal for you with the following details:
+
+**Ticket Information:**
+- Issue: Storage Upgrade Request
+- Current Disk Space: [Will be noted from your report]
+- Requested Additional Storage: [Your choice from above plans]
+- Priority: Normal
+- ETA: 2-4 hours for upgrade completion
+
+**To proceed with the upgrade:**
+1. Let us know which storage plan you'd like (40GB, 60GB, 80GB, 100GB, or 200GB)
+2. We'll create a ticket with your details
+3. You'll receive a ticket number and ETA
+4. Our support team will contact you to confirm and process the upgrade
+5. Minimal downtime during the upgrade process
+
+## Important Notes
+
+- Always try cleanup steps first before upgrading
+- Regular cleanup helps maintain optimal server performance
+- Storage upgrades are processed within 2-4 hours during business hours
+- You can downgrade storage later if needed (contact support)
+- Backup important data before any storage modifications
+
+## Need Help?
+
+If you need assistance with cleanup or have questions about storage upgrades, contact our support team at 1-855-223-4887 or support@acecloudhosting.com.
