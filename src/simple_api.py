@@ -2,6 +2,7 @@
 Lightweight API for Zoho SalesIQ webhook - Uses RAG engine with knowledge base
 """
 import os
+import sys
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +10,16 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from openai import OpenAI
 import uvicorn
-from src.hybrid_chatbot import HybridChatbot
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from src.hybrid_chatbot import HybridChatbot
+    RAG_AVAILABLE = True
+except ImportError:
+    print("[Warning] Could not import HybridChatbot, RAG features disabled")
+    RAG_AVAILABLE = False
 
 app = FastAPI(
     title="AceBuddy Hybrid RAG API",
@@ -30,12 +40,16 @@ app.add_middleware(
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 # Initialize RAG chatbot
-try:
-    chatbot = HybridChatbot()
-    print("[Startup] RAG chatbot initialized successfully")
-except Exception as e:
-    print(f"[Startup] Warning: Could not initialize RAG chatbot: {e}")
-    chatbot = None
+chatbot = None
+if RAG_AVAILABLE:
+    try:
+        chatbot = HybridChatbot()
+        print("[Startup] RAG chatbot initialized successfully")
+    except Exception as e:
+        print(f"[Startup] Warning: Could not initialize RAG chatbot: {e}")
+        chatbot = None
+else:
+    print("[Startup] RAG not available, using direct OpenAI only")
 
 # Session storage for conversation history
 sessions: Dict[str, list] = {}
