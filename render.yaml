@@ -15,6 +15,10 @@ services:
         value: gpt-4o-mini
       - key: OPENAI_EMBEDDING_MODEL
         value: text-embedding-3-small
+      - key: TEMPERATURE
+        value: 0.4
+      - key: MAX_TOKENS
+        value: 1500
       - key: API_SECRET_KEY
         generateValue: true
       - key: API_HOST

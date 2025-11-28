@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     max_context_length: int = 4000
     
     # Response
-    temperature: float = 0.3
-    max_tokens: int = 800
+    temperature: float = 0.4
+    max_tokens: int = 1500
     fallback_to_agent_threshold: float = 0.2
     
     class Config:
