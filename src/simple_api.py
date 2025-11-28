@@ -1,8 +1,8 @@
 """
-Lightweight API for Zoho SalesIQ webhook - Uses RAG engine with knowledge base
+Lightweight API for Zoho SalesIQ webhook - No vector DB required
+Works on Render without chromadb dependencies
 """
 import os
-import sys
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,16 +10,6 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from openai import OpenAI
 import uvicorn
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-try:
-    from src.rag_engine import RAGEngine
-    RAG_AVAILABLE = True
-except ImportError:
-    print("[Warning] Could not import RAGEngine, RAG features disabled")
-    RAG_AVAILABLE = False
 
 app = FastAPI(
     title="AceBuddy Hybrid RAG API",
@@ -38,18 +28,6 @@ app.add_middleware(
 
 # OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
-
-# Initialize RAG engine (not hybrid chatbot to avoid workflow triggers)
-rag_engine = None
-if RAG_AVAILABLE:
-    try:
-        rag_engine = RAGEngine()
-        print("[Startup] RAG engine initialized successfully")
-    except Exception as e:
-        print(f"[Startup] Warning: Could not initialize RAG engine: {e}")
-        rag_engine = None
-else:
-    print("[Startup] RAG not available, using direct OpenAI only")
 
 # Session storage for conversation history
 sessions: Dict[str, list] = {}
@@ -199,34 +177,19 @@ Keep responses brief and actionable. Ask one question at a time."""
         # Add conversation history
         messages.extend(conversation_history)
         
-        print(f"[SalesIQ Webhook] Processing with RAG engine...")
+        print(f"[SalesIQ Webhook] Calling OpenAI with {len(messages)} messages...")
         
-        # Use RAG engine if available, otherwise fall back to direct OpenAI
-        if rag_engine:
-            try:
-                result = rag_engine.process_query(message, conversation_history)
-                ai_response = result.get("response", "I'm having trouble processing that request.")
-                print(f"[SalesIQ Webhook] RAG response received")
-            except Exception as e:
-                print(f"[SalesIQ Webhook] RAG error: {e}, falling back to direct OpenAI")
-                # Fallback to direct OpenAI
-                response = client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=messages,
-                    temperature=0.3,
-                    max_tokens=500
-                )
-                ai_response = response.choices[0].message.content.strip()
-        else:
-            # Fallback if RAG not initialized
-            print(f"[SalesIQ Webhook] RAG not available, using direct OpenAI")
-            response = client.chat.completions.create(
-                model="gpt-4-turbo-preview",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=500
-            )
-            ai_response = response.choices[0].message.content.strip()
+        # Get AI response
+        response = client.chat.completions.create(
+            model="gpt-4-turbo-preview",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=150  # Shorter responses
+        )
+        
+        print(f"[SalesIQ Webhook] OpenAI response received")
+        
+        ai_response = response.choices[0].message.content.strip()
         
         # Remove markdown and newlines for SalesIQ widget
         ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
