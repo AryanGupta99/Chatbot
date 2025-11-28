@@ -15,10 +15,10 @@ import uvicorn
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from src.hybrid_chatbot import HybridChatbot
+    from src.rag_engine import RAGEngine
     RAG_AVAILABLE = True
 except ImportError:
-    print("[Warning] Could not import HybridChatbot, RAG features disabled")
+    print("[Warning] Could not import RAGEngine, RAG features disabled")
     RAG_AVAILABLE = False
 
 app = FastAPI(
@@ -39,15 +39,15 @@ app.add_middleware(
 # OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
-# Initialize RAG chatbot
-chatbot = None
+# Initialize RAG engine (not hybrid chatbot to avoid workflow triggers)
+rag_engine = None
 if RAG_AVAILABLE:
     try:
-        chatbot = HybridChatbot()
-        print("[Startup] RAG chatbot initialized successfully")
+        rag_engine = RAGEngine()
+        print("[Startup] RAG engine initialized successfully")
     except Exception as e:
-        print(f"[Startup] Warning: Could not initialize RAG chatbot: {e}")
-        chatbot = None
+        print(f"[Startup] Warning: Could not initialize RAG engine: {e}")
+        rag_engine = None
 else:
     print("[Startup] RAG not available, using direct OpenAI only")
 
@@ -201,17 +201,12 @@ Keep responses brief and actionable. Ask one question at a time."""
         
         print(f"[SalesIQ Webhook] Processing with RAG engine...")
         
-        # Use RAG chatbot if available, otherwise fall back to direct OpenAI
-        if chatbot:
+        # Use RAG engine if available, otherwise fall back to direct OpenAI
+        if rag_engine:
             try:
-                result = chatbot.process_query(
-                    message,
-                    conversation_history=conversation_history,
-                    session_id=session_key,
-                    user_id=visitor_email
-                )
+                result = rag_engine.process_query(message, conversation_history)
                 ai_response = result.get("response", "I'm having trouble processing that request.")
-                print(f"[SalesIQ Webhook] RAG response received (source: {result.get('source')})")
+                print(f"[SalesIQ Webhook] RAG response received")
             except Exception as e:
                 print(f"[SalesIQ Webhook] RAG error: {e}, falling back to direct OpenAI")
                 # Fallback to direct OpenAI
