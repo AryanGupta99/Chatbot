@@ -69,26 +69,28 @@ class HybridChatbot:
                 "triggers": ["hi", "hello", "hey", "good morning", "good afternoon"],
                 "response": "Hello! I'm AceBuddy, your AI support assistant. I'm here to help you with QuickBooks, Remote Desktop, Email, Server issues, and more. What can I help you with today?"
             },
-            "quickbooks_issues": {
-                "triggers": ["quickbooks", "qb", "accounting", "payroll", "invoice"],
-                "follow_up": "What specific QuickBooks issue are you experiencing? (Error codes, login problems, file issues, etc.)"
-            },
-            "rdp_issues": {
-                "triggers": ["rdp", "remote desktop", "connection", "can't connect", "remote access"],
-                "follow_up": "I can help with Remote Desktop issues. Are you having trouble connecting, or is it a performance issue?"
-            },
-            "password_reset": {
-                "triggers": ["password", "reset", "forgot", "login", "can't login", "locked out"],
-                "response": "I can help you reset your password. Here's what you need to do:\n\n1. Visit our self-care portal: https://selfcare.acecloudhosting.com/\n2. Click 'Forgot Password'\n3. Enter your username or email\n4. Check your email for reset instructions\n\nIf you need immediate assistance, I can also connect you with our support team."
-            },
-            "email_issues": {
-                "triggers": ["email", "outlook", "office 365", "mail", "smtp"],
-                "follow_up": "What email issue are you experiencing? (Can't send/receive, password prompts, setup, etc.)"
-            },
-            "server_issues": {
-                "triggers": ["server", "slow", "performance", "storage", "disk space"],
-                "follow_up": "What server issue are you experiencing? (Performance, storage, connectivity, etc.)"
-            },
+            # Disabled question-based flows - using RAG for direct answers
+            # "quickbooks_issues": {
+            #     "triggers": ["quickbooks", "qb", "accounting", "payroll", "invoice"],
+            #     "follow_up": "What specific QuickBooks issue are you experiencing? (Error codes, login problems, file issues, etc.)"
+            # },
+            # "rdp_issues": {
+            #     "triggers": ["rdp", "remote desktop", "connection", "can't connect", "remote access"],
+            #     "follow_up": "I can help with Remote Desktop issues. Are you having trouble connecting, or is it a performance issue?"
+            # },
+            # Disabled all follow-up question flows - using RAG for complete answers
+            # "password_reset": {
+            #     "triggers": ["password", "reset", "forgot", "login", "can't login", "locked out"],
+            #     "response": "I can help you reset your password..."
+            # },
+            # "email_issues": {
+            #     "triggers": ["email", "outlook", "office 365", "mail", "smtp"],
+            #     "follow_up": "What email issue are you experiencing?"
+            # },
+            # "server_issues": {
+            #     "triggers": ["server", "slow", "performance", "storage", "disk space"],
+            #     "follow_up": "What server issue are you experiencing?"
+            # },
             "billing_support": {
                 "triggers": ["billing", "payment", "invoice", "subscription", "cost", "price"],
                 "response": "For billing and payment inquiries, I'll connect you with our billing specialist who can provide detailed information about your account and pricing. Please hold while I transfer you.",
