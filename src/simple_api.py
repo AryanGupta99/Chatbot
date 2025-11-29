@@ -1,46 +1,20 @@
 """
-API for Zoho SalesIQ webhook with EXPERT RAG support
-Uses advanced vector DB and multi-source knowledge base
+Simple Working API for Zoho SalesIQ webhook
+Uses OpenAI directly with expert prompts (no vector store needed)
 """
 import os
-import sys
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from openai import OpenAI
 import uvicorn
-from pathlib import Path
-
-# Add parent directory to path for imports (Render compatibility)
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent
-if str(parent_dir) not in sys.path:
-    sys.path.insert(0, str(parent_dir))
-
-# Import both RAG engines with fallback
-EXPERT_MODE = False
-rag_engine = None
-
-try:
-    from expert_rag_engine import ExpertRAGEngine
-    EXPERT_MODE = True
-except ImportError:
-    try:
-        from src.expert_rag_engine import ExpertRAGEngine
-        EXPERT_MODE = True
-    except ImportError:
-        try:
-            from rag_engine import RAGEngine
-            EXPERT_MODE = False
-        except ImportError:
-            from src.rag_engine import RAGEngine
-            EXPERT_MODE = False
 
 app = FastAPI(
-    title="AceBuddy Expert RAG API",
-    version="3.0.0",
-    description="SalesIQ webhook with Expert-Level RAG"
+    title="AceBuddy API",
+    version="2.0.0",
+    description="SalesIQ webhook with OpenAI"
 )
 
 # CORS
@@ -52,17 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Expert RAG engine
-if EXPERT_MODE:
-    print("[INFO] Initializing EXPERT RAG Engine...")
-    rag_engine = ExpertRAGEngine()
-    print("[INFO] Expert RAG Engine ready!")
-else:
-    print("[INFO] Initializing Regular RAG Engine...")
-    rag_engine = RAGEngine()
-    print("[INFO] Regular RAG Engine ready!")
+# Initialize OpenAI
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Session storage for conversation history
+# Session storage
 sessions: Dict[str, list] = {}
 
 class ChatRequest(BaseModel):
@@ -73,21 +40,91 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
 
+# Expert system prompt with all KB knowledge
+EXPERT_PROMPT = """You are AceBuddy, an expert IT support assistant for ACE Cloud Hosting.
+
+CRITICAL KNOWLEDGE BASE:
+
+**PASSWORD RESET:**
+- SelfCare Portal: https://selfcare.acecloudhosting.com
+- Steps: 1) Go to portal 2) Click "Forgot Password" 3) Enter email 4) Check email for reset link (2-3 min)
+- If not enrolled: Contact support@acecloudhosting.com or call helpdesk
+- Requires Google Authenticator enrollment
+
+**DISK STORAGE:**
+- Check space: Right-click C: drive → Properties
+- Quick cleanup: Delete temp files (%temp%), run Disk Cleanup utility
+- Upgrade tiers: 40GB ($10/mo), 80GB ($20/mo), 120GB ($30/mo), 200GB ($50/mo)
+- Ticket ETA: 2-4 hours for upgrade
+- Contact: support@acecloudhosting.com
+
+**QUICKBOOKS ERRORS:**
+- Error -6177, 0: Database Server Manager not running. Fix: Services → QuickBooksDBXX → Start
+- Error -6189, -816: Company file corruption. Run QuickBooks File Doctor
+- Error -6098, 5: Multi-user access issue. Check QB Database Server Manager
+- Error -3371: Bank feeds import issue. Rebuild company file
+- Always verify QB Database Server Manager is running
+
+**RDP CONNECTION:**
+- Server format: server.acecloudhosting.com
+- Windows: Use Remote Desktop Connection (mstsc)
+- Mac: Use Microsoft Remote Desktop (NOT built-in)
+- Error 0x204: Network/firewall issue. Check internet connection
+- Error "logon attempt failed": Verify credentials, check Caps Lock
+- Disconnection: Check idle timeout policy (default: 2 hours)
+
+**EMAIL (OUTLOOK):**
+- SMTP: mail.acecloudhosting.com (Port 587 or 465)
+- IMAP: mail.acecloudhosting.com (Port 993)
+- POP3: mail.acecloudhosting.com (Port 995)
+- Password prompts: Disable MFA or use app-specific password
+- Can't send: Check SMTP settings, verify credentials
+
+**SERVER PERFORMANCE:**
+- Slow server: Check Task Manager for high CPU/RAM usage
+- Close unused applications
+- Check for Windows updates
+- Restart server if needed
+- Contact support if persistent: support@acecloudhosting.com
+
+**USER MANAGEMENT:**
+- Add user: Contact support@acecloudhosting.com with user details
+- Delete user: Contact support with username
+- Permissions: Managed through QuickBooks or application settings
+- ETA: 1-2 hours for user changes
+
+**PRINTER ISSUES:**
+- Local printer: Setup → Devices → Printers → Add printer
+- UniPrint: For check printing alignment issues
+- Redirect local printer: RDP settings → Local Resources → Printers
+- Contact support for complex printer issues
+
+**SUPPORT CONTACTS:**
+- Email: support@acecloudhosting.com
+- Helpdesk: Call during business hours
+- SelfCare Portal: https://selfcare.acecloudhosting.com
+- Ticket ETA: 2-4 hours for most issues
+
+RESPONSE STYLE:
+- Be concise (100-150 words max)
+- Provide numbered steps
+- Include specific URLs and contact info
+- Mention timeframes
+- Be direct and actionable
+- NO follow-up questions - give complete answer
+
+FORMATTING:
+- Use numbered lists (1, 2, 3)
+- Keep paragraphs short
+- Include URLs when relevant
+- Mention support contact for escalation"""
+
 @app.get("/")
 async def root():
     return {
         "status": "healthy",
-        "service": "AceBuddy Expert RAG API",
-        "version": "3.0.0",
-        "mode": "EXPERT" if EXPERT_MODE else "REGULAR",
-        "features": [
-            "SalesIQ Webhook",
-            "Expert-Level RAG" if EXPERT_MODE else "Regular RAG",
-            "Multi-Source KB",
-            "Query Classification",
-            "Advanced Retrieval",
-            "Conversation History"
-        ],
+        "service": "AceBuddy API",
+        "version": "2.0.0",
         "timestamp": datetime.now().isoformat()
     }
 
@@ -101,35 +138,35 @@ async def health():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    """Chat endpoint using Expert RAG"""
+    """Chat endpoint"""
     try:
         # Get conversation history
-        conversation_history = sessions.get(request.conversation_id, [])
-        
-        # Use Expert RAG engine
-        if EXPERT_MODE:
-            result = rag_engine.process_query_expert(
-                query=request.message,
-                conversation_history=conversation_history
-            )
-        else:
-            result = rag_engine.process_query(
-                query=request.message,
-                conversation_history=conversation_history
-            )
-        
-        # Update conversation history
         if request.conversation_id not in sessions:
             sessions[request.conversation_id] = []
         
-        sessions[request.conversation_id].append({"role": "user", "content": request.message})
-        sessions[request.conversation_id].append({"role": "assistant", "content": result["response"]})
+        conversation_history = sessions[request.conversation_id][-10:]
         
-        # Keep only last 10 messages
-        sessions[request.conversation_id] = sessions[request.conversation_id][-10:]
+        # Build messages
+        messages = [{"role": "system", "content": EXPERT_PROMPT}]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": request.message})
+        
+        # Get response
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Update history
+        sessions[request.conversation_id].append({"role": "user", "content": request.message})
+        sessions[request.conversation_id].append({"role": "assistant", "content": ai_response})
         
         return ChatResponse(
-            response=result.get("response", "I'm having trouble processing that. Please try again."),
+            response=ai_response,
             conversation_id=request.conversation_id
         )
     except Exception as e:
@@ -138,7 +175,7 @@ async def chat(request: ChatRequest):
 
 @app.get("/webhook/salesiq/test")
 async def test_salesiq_webhook():
-    """Test endpoint to verify webhook is accessible"""
+    """Test endpoint"""
     api_key = os.getenv("OPENAI_API_KEY", "")
     api_key_status = "configured" if api_key and len(api_key) > 10 else "NOT SET"
     
@@ -151,43 +188,25 @@ async def test_salesiq_webhook():
 
 @app.post("/webhook/salesiq")
 async def salesiq_webhook(request: Request):
-    """SalesIQ webhook - returns exact format required by SalesIQ widget"""
+    """SalesIQ webhook"""
     try:
-        # Parse payload
         payload = await request.json()
+        print(f"[SalesIQ] Received: {payload}")
         
-        # Log incoming request for debugging
-        print(f"[SalesIQ Webhook] Received payload: {payload}")
-        
-        # Check if OpenAI API key is set and valid
+        # Check API key
         api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not api_key or len(api_key) < 20 or not api_key.startswith("sk-"):
-            print(f"[ERROR] OPENAI_API_KEY not set or invalid! Length: {len(api_key)}, Starts with sk-: {api_key.startswith('sk-') if api_key else False}")
             return {
                 "action": "reply",
-                "replies": ["I'm having configuration issues. Please ask an administrator to set the OPENAI_API_KEY in Render."],
+                "replies": ["I'm having configuration issues. Please contact support."],
                 "session_id": payload.get("session_id")
             }
         
-        # Extract data from SalesIQ payload
-        # SalesIQ sends message in different formats
-        session_id = payload.get("session_id") or payload.get("chat_id") or payload.get("visitor_id")
-        
-        # Extract message - handle nested structure
+        # Extract message
+        session_id = payload.get("session_id") or payload.get("chat_id") or "default"
         message_obj = payload.get("message", {})
-        if isinstance(message_obj, dict):
-            message = message_obj.get("text", "")
-        else:
-            message = str(message_obj) if message_obj else ""
+        message = message_obj.get("text", "") if isinstance(message_obj, dict) else str(message_obj)
         
-        # Handle visitor object if present
-        visitor = payload.get("visitor", {})
-        visitor_name = visitor.get("name") or payload.get("visitor_name", "there")
-        visitor_email = visitor.get("email") or payload.get("visitor_email", "")
-        
-        print(f"[SalesIQ Webhook] Session: {session_id}, Message: {message}")
-        
-        # If no message, return default greeting
         if not message:
             return {
                 "action": "reply",
@@ -195,89 +214,56 @@ async def salesiq_webhook(request: Request):
                 "session_id": session_id
             }
         
-        # Get or create session for conversation history
-        session_key = f"salesiq_{session_id}" if session_id else "default"
+        # Get/create session
+        session_key = f"salesiq_{session_id}"
         if session_key not in sessions:
             sessions[session_key] = []
         
-        # Keep only last 10 messages for conversation history
         conversation_history = sessions[session_key][-10:]
         
-        print(f"[SalesIQ Webhook] Using {'EXPERT' if EXPERT_MODE else 'REGULAR'} RAG engine...")
+        # Build messages
+        messages = [{"role": "system", "content": EXPERT_PROMPT}]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": message})
         
-        # Use RAG engine to get response
-        if EXPERT_MODE:
-            result = rag_engine.process_query_expert(
-                query=message,
-                conversation_history=conversation_history
-            )
-        else:
-            result = rag_engine.process_query(
-                query=message,
-                conversation_history=conversation_history
-            )
+        print(f"[SalesIQ] Calling OpenAI...")
         
-        print(f"[SalesIQ Webhook] RAG response received (confidence: {result.get('confidence', 'unknown')})")
+        # Get response
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500
+        )
         
-        ai_response = result.get("response", "I'm having trouble processing that. Please try again.")
+        ai_response = response.choices[0].message.content.strip()
         
-        # Remove markdown and newlines for SalesIQ widget
+        # Clean for SalesIQ
         ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
         
-        # Update conversation history
+        # Update history
         sessions[session_key].append({"role": "user", "content": message})
         sessions[session_key].append({"role": "assistant", "content": ai_response})
         
-        # Return SalesIQ format
-        response_data = {
+        print(f"[SalesIQ] Response sent")
+        
+        return {
             "action": "reply",
             "replies": [ai_response],
             "session_id": session_id
         }
         
-        print(f"[SalesIQ Webhook] Sending response: {response_data}")
-        return response_data
-        
-    except ValueError as e:
-        # JSON parsing error
-        print(f"[SalesIQ Webhook] JSON parse error: {str(e)}")
+    except Exception as e:
+        print(f"[SalesIQ] ERROR: {str(e)}")
         return {
             "action": "reply",
-            "replies": ["I didn't receive a valid message. Can you rephrase?"],
+            "replies": ["I encountered an error. Please try again or contact support."],
             "session_id": payload.get("session_id") if 'payload' in locals() else None
         }
-    except Exception as e:
-        # Catch all other errors
-        error_msg = str(e)
-        print(f"[SalesIQ Webhook] ERROR: {error_msg}")
-        print(f"[SalesIQ Webhook] Error type: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
-        
-        # Check for specific OpenAI errors
-        if "api_key" in error_msg.lower() or "authentication" in error_msg.lower():
-            print("[ERROR] OpenAI API key issue detected!")
-            return {
-                "action": "reply",
-                "replies": ["I'm having authentication issues. Please contact support to check the API configuration."],
-                "session_id": payload.get("session_id") if 'payload' in locals() else None
-            }
-        elif "rate_limit" in error_msg.lower():
-            return {
-                "action": "reply",
-                "replies": ["I'm experiencing high traffic. Please try again in a moment."],
-                "session_id": payload.get("session_id") if 'payload' in locals() else None
-            }
-        else:
-            return {
-                "action": "reply",
-                "replies": ["I encountered an error processing your request. Please try again or contact support."],
-                "session_id": payload.get("session_id") if 'payload' in locals() else None
-            }
 
 @app.get("/stats")
 async def get_stats():
-    """Get API statistics"""
+    """Get stats"""
     return {
         "active_sessions": len(sessions),
         "total_messages": sum(len(msgs) for msgs in sessions.values()),
