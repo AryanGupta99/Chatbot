@@ -4,8 +4,8 @@ services:
     env: python
     plan: free
     runtime: python
-    buildCommand: pip install -r requirements.txt && python build_kb_for_deploy.py
-    startCommand: python src/simple_api.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/simple_api_working.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

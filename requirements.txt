@@ -2,18 +2,8 @@
 fastapi==0.109.0
 uvicorn==0.27.0
 pydantic==2.6.0
-pydantic-settings==2.1.0
 python-dotenv==1.0.0
 python-multipart==0.0.6
 
-# OpenAI and HTTP
+# OpenAI
 openai==1.10.0
-httpx==0.26.0
-requests==2.31.0
-
-# Vector Database - Pin NumPy to 1.x for ChromaDB compatibility
-numpy<2.0.0
-chromadb==0.4.22
-
-# NLP and Text Processing
-tiktoken==0.5.2
