@@ -4,7 +4,19 @@ from typing import List, Dict, Any, Optional
 import chromadb
 from chromadb.config import Settings
 from openai import OpenAI
-from config import settings
+import sys
+
+# Add parent directory to path for imports (Render compatibility)
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
+# Import with fallback
+try:
+    from config import settings
+except ImportError:
+    from src.config import settings
 
 class VectorStore:
     """Manages vector database operations with ChromaDB"""

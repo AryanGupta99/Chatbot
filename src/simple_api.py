@@ -3,20 +3,39 @@ API for Zoho SalesIQ webhook with EXPERT RAG support
 Uses advanced vector DB and multi-source knowledge base
 """
 import os
+import sys
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uvicorn
+from pathlib import Path
 
-# Import both RAG engines
+# Add parent directory to path for imports (Render compatibility)
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
+# Import both RAG engines with fallback
+EXPERT_MODE = False
+rag_engine = None
+
 try:
-    from src.expert_rag_engine import ExpertRAGEngine
+    from expert_rag_engine import ExpertRAGEngine
     EXPERT_MODE = True
 except ImportError:
-    from src.rag_engine import RAGEngine
-    EXPERT_MODE = False
+    try:
+        from src.expert_rag_engine import ExpertRAGEngine
+        EXPERT_MODE = True
+    except ImportError:
+        try:
+            from rag_engine import RAGEngine
+            EXPERT_MODE = False
+        except ImportError:
+            from src.rag_engine import RAGEngine
+            EXPERT_MODE = False
 
 app = FastAPI(
     title="AceBuddy Expert RAG API",

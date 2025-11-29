@@ -1,7 +1,24 @@
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
-from config import settings
-from src.vector_store import VectorStore
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports (Render compatibility)
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
+# Import with fallback
+try:
+    from config import settings
+except ImportError:
+    from src.config import settings
+
+try:
+    from vector_store import VectorStore
+except ImportError:
+    from src.vector_store import VectorStore
 
 class RAGEngine:
     """Core RAG engine for query processing and response generation"""
