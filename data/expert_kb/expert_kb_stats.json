@@ -1,0 +1,33 @@
+{
+  "total_chunks": 1281,
+  "total_chars": 498851,
+  "total_words": 79769,
+  "by_source_type": {
+    "PDF_SOP": 649,
+    "Manual_KB": 118,
+    "Zobot_QA": 186,
+    "Unknown": 328
+  },
+  "by_category": {
+    "QuickBooks": 388,
+    "User Management": 30,
+    "Server": 147,
+    "General": 360,
+    "Remote Desktop": 155,
+    "Email": 72,
+    "Password Reset": 5,
+    "Disk Storage": 13,
+    "RDP Connection": 14,
+    "Printer": 25,
+    "Server Performance": 15,
+    "General Error": 1,
+    "Password/Login": 41,
+    "Other": 3,
+    "Storage": 4,
+    "Display": 8
+  },
+  "by_priority": {
+    "high": 767,
+    "medium": 514
+  }
+}

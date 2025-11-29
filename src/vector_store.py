@@ -64,7 +64,24 @@ class VectorStore:
         # Prepare data
         ids = [chunk["id"] for chunk in chunks]
         documents = [chunk["content"] for chunk in chunks]
-        metadatas = [chunk["metadata"] for chunk in chunks]
+        
+        # Clean metadatas - ChromaDB only accepts str, int, float, bool, or None
+        metadatas = []
+        for chunk in chunks:
+            clean_meta = {}
+            for key, value in chunk["metadata"].items():
+                if isinstance(value, (str, int, float, bool)) or value is None:
+                    clean_meta[key] = value
+                elif isinstance(value, list):
+                    # Convert lists to comma-separated strings
+                    clean_meta[key] = ", ".join(str(v) for v in value)
+                elif isinstance(value, dict):
+                    # Convert dicts to JSON strings
+                    clean_meta[key] = str(value)
+                else:
+                    # Convert other types to strings
+                    clean_meta[key] = str(value)
+            metadatas.append(clean_meta)
         
         # Generate embeddings
         print("Generating embeddings...")

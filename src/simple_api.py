@@ -1,6 +1,6 @@
 """
-Lightweight API for Zoho SalesIQ webhook - No vector DB required
-Works on Render without chromadb dependencies
+API for Zoho SalesIQ webhook with EXPERT RAG support
+Uses advanced vector DB and multi-source knowledge base
 """
 import os
 from datetime import datetime
@@ -8,13 +8,20 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-from openai import OpenAI
 import uvicorn
 
+# Import both RAG engines
+try:
+    from src.expert_rag_engine import ExpertRAGEngine
+    EXPERT_MODE = True
+except ImportError:
+    from src.rag_engine import RAGEngine
+    EXPERT_MODE = False
+
 app = FastAPI(
-    title="AceBuddy Hybrid RAG API",
-    version="2.0.0",
-    description="SalesIQ webhook integration with OpenAI"
+    title="AceBuddy Expert RAG API",
+    version="3.0.0",
+    description="SalesIQ webhook with Expert-Level RAG"
 )
 
 # CORS
@@ -26,8 +33,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+# Initialize Expert RAG engine
+if EXPERT_MODE:
+    print("[INFO] Initializing EXPERT RAG Engine...")
+    rag_engine = ExpertRAGEngine()
+    print("[INFO] Expert RAG Engine ready!")
+else:
+    print("[INFO] Initializing Regular RAG Engine...")
+    rag_engine = RAGEngine()
+    print("[INFO] Regular RAG Engine ready!")
 
 # Session storage for conversation history
 sessions: Dict[str, list] = {}
@@ -44,9 +58,17 @@ class ChatResponse(BaseModel):
 async def root():
     return {
         "status": "healthy",
-        "service": "AceBuddy Hybrid RAG API",
-        "version": "2.0.0",
-        "features": ["SalesIQ Webhook", "OpenAI GPT-4", "Conversation History"],
+        "service": "AceBuddy Expert RAG API",
+        "version": "3.0.0",
+        "mode": "EXPERT" if EXPERT_MODE else "REGULAR",
+        "features": [
+            "SalesIQ Webhook",
+            "Expert-Level RAG" if EXPERT_MODE else "Regular RAG",
+            "Multi-Source KB",
+            "Query Classification",
+            "Advanced Retrieval",
+            "Conversation History"
+        ],
         "timestamp": datetime.now().isoformat()
     }
 
@@ -60,23 +82,39 @@ async def health():
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    """Simple chat endpoint"""
+    """Chat endpoint using Expert RAG"""
     try:
-        response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[
-                {"role": "system", "content": "You are AceBuddy, a helpful IT support assistant for ACE Cloud Hosting. Help users with QuickBooks, RDP, email, and server issues."},
-                {"role": "user", "content": request.message}
-            ],
-            temperature=0.3,
-            max_tokens=500
-        )
+        # Get conversation history
+        conversation_history = sessions.get(request.conversation_id, [])
+        
+        # Use Expert RAG engine
+        if EXPERT_MODE:
+            result = rag_engine.process_query_expert(
+                query=request.message,
+                conversation_history=conversation_history
+            )
+        else:
+            result = rag_engine.process_query(
+                query=request.message,
+                conversation_history=conversation_history
+            )
+        
+        # Update conversation history
+        if request.conversation_id not in sessions:
+            sessions[request.conversation_id] = []
+        
+        sessions[request.conversation_id].append({"role": "user", "content": request.message})
+        sessions[request.conversation_id].append({"role": "assistant", "content": result["response"]})
+        
+        # Keep only last 10 messages
+        sessions[request.conversation_id] = sessions[request.conversation_id][-10:]
         
         return ChatResponse(
-            response=response.choices[0].message.content,
+            response=result.get("response", "I'm having trouble processing that. Please try again."),
             conversation_id=request.conversation_id
         )
     except Exception as e:
+        print(f"[Chat Error] {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/webhook/salesiq/test")
@@ -143,58 +181,32 @@ async def salesiq_webhook(request: Request):
         if session_key not in sessions:
             sessions[session_key] = []
         
-        # Add user message to history
-        sessions[session_key].append({"role": "user", "content": message})
-        
-        # Keep only last 10 messages
+        # Keep only last 10 messages for conversation history
         conversation_history = sessions[session_key][-10:]
         
-        # Build messages for OpenAI
-        messages = [
-            {
-                "role": "system",
-                "content": """You are AceBuddy, a helpful IT support assistant for ACE Cloud Hosting.
-
-Provide SHORT, CONCISE responses (1-2 sentences max). No markdown, no code blocks, no newlines.
-
-IMPORTANT - Password Reset Flow:
-When user asks about password reset, follow this EXACT flow:
-1. First ask: "Are you registered on our Self-Care Portal?"
-2. If YES: "Great! You can reset your password directly at https://selfcare.acecloudhosting.com. Login with your email and click 'Forgot Password'."
-3. If NO: "No problem! Please contact our IT support team at support@acecloudhosting.com or call the helpdesk to get registered and reset your password."
-
-Other common issues:
-- QuickBooks: Ask what specific error or issue they're experiencing
-- RDP connection: Ask if they can ping the server or if it's a login issue
-- Email: Ask which email client they're using
-- Server slowness: Ask which application is slow
-- Printer: Ask what error message they see
-
-Keep responses brief and actionable. Ask one question at a time."""
-            }
-        ]
+        print(f"[SalesIQ Webhook] Using {'EXPERT' if EXPERT_MODE else 'REGULAR'} RAG engine...")
         
-        # Add conversation history
-        messages.extend(conversation_history)
+        # Use RAG engine to get response
+        if EXPERT_MODE:
+            result = rag_engine.process_query_expert(
+                query=message,
+                conversation_history=conversation_history
+            )
+        else:
+            result = rag_engine.process_query(
+                query=message,
+                conversation_history=conversation_history
+            )
         
-        print(f"[SalesIQ Webhook] Calling OpenAI with {len(messages)} messages...")
+        print(f"[SalesIQ Webhook] RAG response received (confidence: {result.get('confidence', 'unknown')})")
         
-        # Get AI response
-        response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=messages,
-            temperature=0.3,
-            max_tokens=150  # Shorter responses
-        )
-        
-        print(f"[SalesIQ Webhook] OpenAI response received")
-        
-        ai_response = response.choices[0].message.content.strip()
+        ai_response = result.get("response", "I'm having trouble processing that. Please try again.")
         
         # Remove markdown and newlines for SalesIQ widget
         ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
         
-        # Add assistant response to history
+        # Update conversation history
+        sessions[session_key].append({"role": "user", "content": message})
         sessions[session_key].append({"role": "assistant", "content": ai_response})
         
         # Return SalesIQ format
