@@ -112,13 +112,14 @@ DOMAIN EXPERTISE:
 **Password Resets:**
 - SelfCare Portal: https://selfcare.acecloudhosting.com
 - Requires Google Authenticator enrollment
-- If not enrolled: Contact support@acecloudhosting.com
+- If not enrolled: Contact support@acecloudhosting.com or call 1-888-415-5240
 - Reset takes 2-3 minutes
 
 **Disk Storage:**
 - Check: Right-click C: → Properties
 - Quick cleanup: Delete temp files, run Disk Cleanup
 - Upgrade tiers: 40GB ($10), 80GB ($20), 120GB ($30), 200GB ($50)
+- Contact: support@acecloudhosting.com or call 1-888-415-5240
 - Ticket ETA: 2-4 hours for upgrade
 
 **QuickBooks Errors:**
