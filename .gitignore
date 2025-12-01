@@ -41,6 +41,8 @@ logs/
 # Data (keep structure, ignore large files)
 data/chroma/*.sqlite3
 data/chroma/*/
+# Allow processed data for deployment
+!data/processed/final_chunks.json
 data/processed/*.json
 data/*.json
 

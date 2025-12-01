@@ -5,7 +5,7 @@ services:
     plan: free
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python src/simple_api_working.py
+    startCommand: python src/api_with_auto_rebuild.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
