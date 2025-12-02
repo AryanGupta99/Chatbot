@@ -291,127 +291,96 @@ async def chat(request: ChatRequest):
 
 @app.post("/webhook/salesiq")
 async def salesiq_webhook(request: Request):
-    """SalesIQ webhook"""
+    """SalesIQ webhook - BULLETPROOF VERSION"""
+    ai_response = "I'm here to help! How can I assist you today?"  # Default fallback
+    
     try:
         payload = await request.json()
+        print(f"\n📥 SalesIQ Payload: {json.dumps(payload, indent=2)[:300]}")
         
         session_id = payload.get("session_id") or payload.get("chat_id") or "default"
         message_obj = payload.get("message", {})
         message = message_obj.get("text", "") if isinstance(message_obj, dict) else str(message_obj)
         
-        if not message:
-            return {
-                "action": "reply",
-                "replies": ["Hello! I'm AceBuddy. How can I assist you today?"],
-                "session_id": session_id
-            }
+        print(f"📝 Message: {message}")
         
-        session_key = f"salesiq_{session_id}"
-        if session_key not in sessions:
-            sessions[session_key] = []
-        
-        conversation_history = sessions[session_key][-10:]
-        
-        # Try RAG first (generate full response, then adapt if needed)
-        ai_response = None
-        if USE_RAG and rag_engine:
-            try:
-                # First, try generating a normal response
-                result = rag_engine.process_query_expert(
-                    message,
-                    conversation_history=conversation_history,
-                    concise_mode=False  # Start with full response
-                )
-                ai_response = result.get("response", "").strip()
-                
-                # LOG PROOF OF RAG USAGE (SalesIQ)
-                print(f"\n{'='*60}")
-                print(f"🔍 SALESIQ RAG: {message[:100]}")
-                print(f"📂 Category: {result.get('category', 'N/A')}")
-                print(f"📚 KB Sources: {len(result.get('sources', []))}")
-                print(f"✅ Initial Response Length: {len(ai_response)} chars")
-                
-                # If response is too long (over 1800 chars), regenerate in concise mode
-                if len(ai_response) > 1800:
-                    print(f"⚠️ Response too long ({len(ai_response)} chars), regenerating in concise mode...")
+        if not message or len(message.strip()) == 0:
+            ai_response = "Hello! I'm AceBuddy. How can I assist you today?"
+        else:
+            session_key = f"salesiq_{session_id}"
+            if session_key not in sessions:
+                sessions[session_key] = []
+            
+            conversation_history = sessions[session_key][-10:]
+            
+            # Try RAG first
+            if USE_RAG and rag_engine:
+                try:
+                    # Generate response
                     result = rag_engine.process_query_expert(
                         message,
                         conversation_history=conversation_history,
-                        concise_mode=True  # Now use concise mode
+                        concise_mode=False
                     )
                     ai_response = result.get("response", "").strip()
-                    print(f"✅ Concise Response Length: {len(ai_response)} chars")
-                else:
-                    print(f"✅ Response length OK - sending full detailed answer")
-                
-                print(f"{'='*60}\n")
-                
-                # Validate response
-                if not ai_response or len(ai_response) < 10:
-                    print("⚠️ RAG response too short, using fallback")
-                    ai_response = None
                     
-            except Exception as e:
-                print(f"❌ RAG failed: {e}, using fallback")
-                ai_response = None
-        
-        # Fallback if RAG failed or no response
-        if not ai_response:
-            # Add concise instruction for SalesIQ
-            concise_prompt = ENHANCED_PROMPT + "\n\nIMPORTANT: Keep responses under 800 characters. Be direct and concise."
-            messages = [{"role": "system", "content": concise_prompt}]
-            messages.extend(conversation_history)
-            messages.append({"role": "user", "content": message})
+                    print(f"✅ RAG Response Length: {len(ai_response)} chars")
+                    
+                    # If too long, regenerate concisely
+                    if len(ai_response) > 1800:
+                        print(f"⚠️ Too long, regenerating...")
+                        result = rag_engine.process_query_expert(
+                            message,
+                            conversation_history=conversation_history,
+                            concise_mode=True
+                        )
+                        ai_response = result.get("response", "").strip()
+                        print(f"✅ Concise: {len(ai_response)} chars")
+                        
+                except Exception as e:
+                    print(f"❌ RAG Error: {e}")
+                    # Fallback to simple prompt
+                    try:
+                        messages = [{"role": "system", "content": ENHANCED_PROMPT + "\n\nBe concise (under 1500 chars)."}]
+                        messages.extend(conversation_history[-5:])
+                        messages.append({"role": "user", "content": message})
+                        
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=messages,
+                            temperature=0.3,
+                            max_tokens=500
+                        )
+                        ai_response = response.choices[0].message.content.strip()
+                    except Exception as e2:
+                        print(f"❌ Fallback Error: {e2}")
+                        ai_response = "I'm experiencing technical difficulties. Please contact support@acecloudhosting.com or call 1-888-415-5240."
             
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=300  # Reduced for concise responses
-            )
-            ai_response = response.choices[0].message.content.strip()
+            # Clean response
+            ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").strip()
+            while "  " in ai_response:
+                ai_response = ai_response.replace("  ", " ")
+            
+            # Truncate if needed
+            if len(ai_response) > 1900:
+                ai_response = ai_response[:1800] + "... Contact support@acecloudhosting.com or 1-888-415-5240 for more details."
+            
+            # Remove problematic chars
+            ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
+            
+            # Update history
+            sessions[session_key].append({"role": "user", "content": message})
+            sessions[session_key].append({"role": "assistant", "content": ai_response})
         
-        # Clean for SalesIQ (preserve content, just format)
-        ai_response = (ai_response
-                      .replace("**", "")
-                      .replace("*", "")
-                      .replace("\n\n", " ")
-                      .replace("\n", " ")
-                      .strip())
-        
-        # Remove multiple spaces
-        while "  " in ai_response:
-            ai_response = ai_response.replace("  ", " ")
-        
-        # SalesIQ character limit - truncate only if extremely long
-        MAX_SALESIQ_LENGTH = 1900  # Allow detailed responses up to ~2000 chars
-        if len(ai_response) > MAX_SALESIQ_LENGTH:
-            print(f"⚠️ Response still too long ({len(ai_response)} chars), truncating to {MAX_SALESIQ_LENGTH}")
-            ai_response = ai_response[:MAX_SALESIQ_LENGTH-100] + "... For complete details, please contact support@acecloudhosting.com or call 1-888-415-5240."
-        
-        # Remove any problematic characters
-        ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
-        
-        # Final validation - ensure we have a response
-        if not ai_response or len(ai_response) < 10:
-            print(f"⚠️ Empty response detected! Original length: {len(ai_response)}")
-            ai_response = "I'm here to help! Could you please provide more details about your question?"
-        
-        print(f"📤 Final response length: {len(ai_response)} chars")
-        
-        # Update history
-        sessions[session_key].append({"role": "user", "content": message})
-        sessions[session_key].append({"role": "assistant", "content": ai_response})
-        
-        # Build response
+        # ALWAYS return valid response
         salesiq_response = {
             "action": "reply",
-            "replies": [ai_response],
+            "replies": [ai_response if ai_response else "How can I help you?"],
             "session_id": session_id
         }
         
-        # Log the actual response being sent
-        print(f"📨 SalesIQ Response: {json.dumps(salesiq_response, ensure_ascii=False)[:200]}...")
+        print(f"📤 Sending: {len(ai_response)} chars")
+        print(f"📨 Response: {json.dumps(salesiq_response)[:150]}...")
         
         return salesiq_response
         
