@@ -313,7 +313,8 @@ Remember: You're having a CONVERSATION, not writing a manual. Ask first, solve s
         query: str, 
         context: str,
         category: str = None,
-        conversation_history: Optional[List[Dict[str, str]]] = None
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        concise_mode: bool = False
     ) -> Dict[str, Any]:
         """Generate expert-level response with category awareness"""
         
@@ -326,23 +327,35 @@ Remember: You're having a CONVERSATION, not writing a manual. Ask first, solve s
         # Build enhanced prompt
         category_hint = f"\n[Query Category: {category.replace('_', ' ').title()}]" if category else ""
         
+        # Adjust instructions based on mode
+        if concise_mode:
+            length_instruction = """
+IMPORTANT: Keep your response CONCISE and under 800 characters. Focus on:
+1. The most critical 2-3 steps
+2. Essential contact info if needed
+3. Skip detailed explanations - be direct and actionable"""
+        else:
+            length_instruction = "\nProvide a complete, actionable solution following the expert response structure. Be specific, precise, and thorough."
+        
         user_message = f"""Based on the following knowledge base information, provide an EXPERT-LEVEL solution.{category_hint}
 
 Knowledge Base Context:
 {context}
 
 User Question: {query}
-
-Provide a complete, actionable solution following the expert response structure. Be specific, precise, and thorough."""
+{length_instruction}"""
         
         messages.append({"role": "user", "content": user_message})
+        
+        # Adjust max_tokens for concise mode
+        max_tokens = 300 if concise_mode else settings.max_tokens
         
         # Generate response with higher quality settings
         response = self.openai_client.chat.completions.create(
             model=settings.openai_model,
             messages=messages,
             temperature=0.3,  # Lower for more consistent expert responses
-            max_tokens=settings.max_tokens,
+            max_tokens=max_tokens,
             presence_penalty=0.1,  # Slight penalty for repetition
             frequency_penalty=0.1
         )
@@ -394,7 +407,8 @@ Provide a complete, actionable solution following the expert response structure.
     def process_query_expert(
         self, 
         query: str, 
-        conversation_history: Optional[List[Dict[str, str]]] = None
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        concise_mode: bool = False
     ) -> Dict[str, Any]:
         """Main expert-level query processing"""
         
@@ -422,9 +436,9 @@ Provide a complete, actionable solution following the expert response structure.
         # Step 4: Build optimized context
         context = self.build_context_optimized(retrieved_results, query, category)
         
-        # Step 5: Generate expert response
+        # Step 5: Generate expert response (with concise mode for SalesIQ)
         result = self.generate_expert_response(
-            query, context, category, conversation_history
+            query, context, category, conversation_history, concise_mode=concise_mode
         )
         
         # Step 6: Calculate confidence

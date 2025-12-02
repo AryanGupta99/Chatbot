@@ -312,19 +312,20 @@ async def salesiq_webhook(request: Request):
         
         conversation_history = sessions[session_key][-10:]
         
-        # Try RAG first
+        # Try RAG first (with concise mode for SalesIQ)
         ai_response = None
         if USE_RAG and rag_engine:
             try:
                 result = rag_engine.process_query_expert(
                     message,
-                    conversation_history=conversation_history
+                    conversation_history=conversation_history,
+                    concise_mode=True  # Enable concise mode for SalesIQ
                 )
                 ai_response = result.get("response", "").strip()
                 
                 # LOG PROOF OF RAG USAGE (SalesIQ)
                 print(f"\n{'='*60}")
-                print(f"🔍 SALESIQ RAG: {message[:100]}")
+                print(f"🔍 SALESIQ RAG (CONCISE MODE): {message[:100]}")
                 print(f"📂 Category: {result.get('category', 'N/A')}")
                 print(f"📚 KB Sources: {len(result.get('sources', []))}")
                 print(f"✅ Response Length: {len(ai_response)} chars")
@@ -341,7 +342,9 @@ async def salesiq_webhook(request: Request):
         
         # Fallback if RAG failed or no response
         if not ai_response:
-            messages = [{"role": "system", "content": ENHANCED_PROMPT}]
+            # Add concise instruction for SalesIQ
+            concise_prompt = ENHANCED_PROMPT + "\n\nIMPORTANT: Keep responses under 800 characters. Be direct and concise."
+            messages = [{"role": "system", "content": concise_prompt}]
             messages.extend(conversation_history)
             messages.append({"role": "user", "content": message})
             
@@ -349,7 +352,7 @@ async def salesiq_webhook(request: Request):
                 model="gpt-4o-mini",
                 messages=messages,
                 temperature=0.3,
-                max_tokens=500
+                max_tokens=300  # Reduced for concise responses
             )
             ai_response = response.choices[0].message.content.strip()
         
