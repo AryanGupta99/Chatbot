@@ -312,23 +312,36 @@ async def salesiq_webhook(request: Request):
         
         conversation_history = sessions[session_key][-10:]
         
-        # Try RAG first (with concise mode for SalesIQ)
+        # Try RAG first (generate full response, then adapt if needed)
         ai_response = None
         if USE_RAG and rag_engine:
             try:
+                # First, try generating a normal response
                 result = rag_engine.process_query_expert(
                     message,
                     conversation_history=conversation_history,
-                    concise_mode=True  # Enable concise mode for SalesIQ
+                    concise_mode=False  # Start with full response
                 )
                 ai_response = result.get("response", "").strip()
                 
                 # LOG PROOF OF RAG USAGE (SalesIQ)
                 print(f"\n{'='*60}")
-                print(f"🔍 SALESIQ RAG (CONCISE MODE): {message[:100]}")
+                print(f"🔍 SALESIQ RAG: {message[:100]}")
                 print(f"📂 Category: {result.get('category', 'N/A')}")
                 print(f"📚 KB Sources: {len(result.get('sources', []))}")
-                print(f"✅ Response Length: {len(ai_response)} chars")
+                print(f"✅ Initial Response Length: {len(ai_response)} chars")
+                
+                # If response is too long, regenerate in concise mode
+                if len(ai_response) > 1000:
+                    print(f"⚠️ Response too long, regenerating in concise mode...")
+                    result = rag_engine.process_query_expert(
+                        message,
+                        conversation_history=conversation_history,
+                        concise_mode=True  # Now use concise mode
+                    )
+                    ai_response = result.get("response", "").strip()
+                    print(f"✅ Concise Response Length: {len(ai_response)} chars")
+                
                 print(f"{'='*60}\n")
                 
                 # Validate response
