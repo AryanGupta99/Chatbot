@@ -313,34 +313,34 @@ async def salesiq_webhook(request: Request):
         conversation_history = sessions[session_key][-10:]
         
         # Try RAG first
+        ai_response = None
         if USE_RAG and rag_engine:
             try:
                 result = rag_engine.process_query_expert(
                     message,
                     conversation_history=conversation_history
                 )
-                ai_response = result["response"]
+                ai_response = result.get("response", "").strip()
                 
                 # LOG PROOF OF RAG USAGE (SalesIQ)
                 print(f"\n{'='*60}")
                 print(f"🔍 SALESIQ RAG: {message[:100]}")
                 print(f"📂 Category: {result.get('category', 'N/A')}")
                 print(f"📚 KB Sources: {len(result.get('sources', []))}")
+                print(f"✅ Response Length: {len(ai_response)} chars")
                 print(f"{'='*60}\n")
-            except Exception as e:
-                print(f"RAG failed: {e}")
-                messages = [{"role": "system", "content": ENHANCED_PROMPT}]
-                messages.extend(conversation_history)
-                messages.append({"role": "user", "content": message})
                 
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=messages,
-                    temperature=0.3,
-                    max_tokens=500
-                )
-                ai_response = response.choices[0].message.content.strip()
-        else:
+                # Validate response
+                if not ai_response or len(ai_response) < 10:
+                    print("⚠️ RAG response too short, using fallback")
+                    ai_response = None
+                    
+            except Exception as e:
+                print(f"❌ RAG failed: {e}, using fallback")
+                ai_response = None
+        
+        # Fallback if RAG failed or no response
+        if not ai_response:
             messages = [{"role": "system", "content": ENHANCED_PROMPT}]
             messages.extend(conversation_history)
             messages.append({"role": "user", "content": message})
@@ -353,8 +353,24 @@ async def salesiq_webhook(request: Request):
             )
             ai_response = response.choices[0].message.content.strip()
         
-        # Clean for SalesIQ
-        ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
+        # Clean for SalesIQ (preserve content, just format)
+        ai_response = (ai_response
+                      .replace("**", "")
+                      .replace("*", "")
+                      .replace("\n\n", " ")
+                      .replace("\n", " ")
+                      .strip())
+        
+        # Remove multiple spaces
+        while "  " in ai_response:
+            ai_response = ai_response.replace("  ", " ")
+        
+        # Final validation - ensure we have a response
+        if not ai_response or len(ai_response) < 10:
+            print(f"⚠️ Empty response detected! Original length: {len(ai_response)}")
+            ai_response = "I'm here to help! Could you please provide more details about your question?"
+        
+        print(f"📤 Final response length: {len(ai_response)} chars")
         
         # Update history
         sessions[session_key].append({"role": "user", "content": message})
@@ -368,10 +384,14 @@ async def salesiq_webhook(request: Request):
         
     except Exception as e:
         print(f"[SalesIQ] ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Always return valid SalesIQ format
         return {
             "action": "reply",
-            "replies": ["I encountered an error. Please try again or contact support."],
-            "session_id": payload.get("session_id") if 'payload' in locals() else None
+            "replies": ["I'm experiencing a technical issue. Please contact our support team at 1-888-415-5240 or support@acecloudhosting.com for immediate assistance."],
+            "session_id": payload.get("session_id", "error") if 'payload' in locals() else "error"
         }
 
 @app.get("/stats")
