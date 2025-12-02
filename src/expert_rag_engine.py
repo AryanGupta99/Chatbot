@@ -20,11 +20,19 @@ parent_dir = current_dir.parent
 if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
-# Import with fallback
+# Import with fallback - try both ways
 try:
     from config import settings
 except ImportError:
-    from src.config import settings
+    try:
+        from src.config import settings
+    except ImportError:
+        # Create minimal settings if config not found
+        class Settings:
+            OPENAI_API_KEY = None
+            EMBEDDING_MODEL = "text-embedding-3-small"
+            CHAT_MODEL = "gpt-4o-mini"
+        settings = Settings()
 
 try:
     from vector_store import VectorStore

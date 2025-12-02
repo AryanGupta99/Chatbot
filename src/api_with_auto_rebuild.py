@@ -83,8 +83,11 @@ try:
             
             # Load processed chunks
             with open(processed_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                chunks = data.get('chunks', [])
+                chunks = json.load(f)
+            
+            # Handle both formats: list or dict with 'chunks' key
+            if isinstance(chunks, dict):
+                chunks = chunks.get('chunks', [])
             
             print(f"📚 Found {len(chunks)} chunks to process")
             
@@ -93,9 +96,25 @@ try:
             for i in range(0, len(chunks), batch_size):
                 batch = chunks[i:i+batch_size]
                 
-                ids = [chunk.get('id', f'chunk_{i+j}') for j, chunk in enumerate(batch)]
-                documents = [chunk.get('text', '') for chunk in batch]
-                metadatas = [chunk.get('metadata', {}) for chunk in batch]
+                ids = []
+                documents = []
+                metadatas = []
+                
+                for j, chunk in enumerate(batch):
+                    # Handle different chunk formats safely
+                    if isinstance(chunk, dict):
+                        chunk_id = chunk.get('id', f'chunk_{i+j}')
+                        text = chunk.get('text', chunk.get('content', ''))
+                        metadata = chunk.get('metadata', {})
+                    else:
+                        # If chunk is not a dict, convert to string
+                        chunk_id = f'chunk_{i+j}'
+                        text = str(chunk) if chunk else ''
+                        metadata = {}
+                    
+                    ids.append(chunk_id)
+                    documents.append(text)
+                    metadatas.append(metadata)
                 
                 # Generate embeddings using OpenAI
                 texts_to_embed = [doc[:8000] for doc in documents]  # Limit length
