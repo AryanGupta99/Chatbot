@@ -1,6 +1,7 @@
 """
 Smart API that auto-rebuilds ChromaDB on startup
 Works on Render free tier by rebuilding from processed data
+Version: 3.0.1 - Force redeploy
 """
 import os
 import json
