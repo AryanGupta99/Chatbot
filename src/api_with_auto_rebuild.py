@@ -296,13 +296,29 @@ async def salesiq_webhook(request: Request):
     
     try:
         payload = await request.json()
-        print(f"\n📥 SalesIQ Payload: {json.dumps(payload, indent=2)[:300]}")
+        print(f"\n📥 SalesIQ Payload: {json.dumps(payload, indent=2)[:500]}")
         
-        session_id = payload.get("session_id") or payload.get("chat_id") or "default"
+        # Extract session_id - try multiple possible locations
+        session_id = (payload.get("session_id") or 
+                     payload.get("chat_id") or 
+                     payload.get("visitor", {}).get("id") or
+                     payload.get("request", {}).get("id") or
+                     "default")
+        
+        # Extract message - try multiple possible locations
         message_obj = payload.get("message", {})
-        message = message_obj.get("text", "") if isinstance(message_obj, dict) else str(message_obj)
+        if isinstance(message_obj, dict):
+            message = message_obj.get("text", "") or message_obj.get("content", "")
+        else:
+            message = str(message_obj) if message_obj else ""
         
-        print(f"📝 Message: {message}")
+        # Also check if message is in visitor object
+        if not message and "visitor" in payload:
+            visitor_msg = payload["visitor"].get("question", "")
+            if visitor_msg:
+                message = visitor_msg
+        
+        print(f"📝 Extracted Message: '{message}'")
         
         if not message or len(message.strip()) == 0:
             ai_response = "Hello! I'm AceBuddy. How can I assist you today?"
@@ -372,15 +388,21 @@ async def salesiq_webhook(request: Request):
             sessions[session_key].append({"role": "user", "content": message})
             sessions[session_key].append({"role": "assistant", "content": ai_response})
         
-        # ALWAYS return valid response
+        # ALWAYS return valid response - ensure it's not empty
+        final_response = ai_response if (ai_response and len(ai_response) > 0) else "How can I help you?"
+        
         salesiq_response = {
             "action": "reply",
-            "replies": [ai_response if ai_response else "How can I help you?"],
-            "session_id": session_id
+            "replies": [final_response]
         }
         
-        print(f"📤 Sending: {len(ai_response)} chars")
-        print(f"📨 Response: {json.dumps(salesiq_response)[:150]}...")
+        # Only add session_id if it's not "default"
+        if session_id and session_id != "default":
+            salesiq_response["session_id"] = session_id
+        
+        print(f"📤 Sending: {len(final_response)} chars")
+        print(f"📨 Full Response JSON:")
+        print(json.dumps(salesiq_response, ensure_ascii=False, indent=2))
         
         return salesiq_response
         
