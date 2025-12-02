@@ -330,10 +330,11 @@ Remember: You're having a CONVERSATION, not writing a manual. Ask first, solve s
         # Adjust instructions based on mode
         if concise_mode:
             length_instruction = """
-IMPORTANT: Keep your response CONCISE (under 900 characters). Include:
-1. Key steps (3-5 main points)
-2. Essential details (URLs, phone numbers)
-3. Brief but complete - don't skip critical info"""
+IMPORTANT: Keep your response DETAILED but CONCISE (1200-1500 characters max). Include:
+1. All key steps (5-7 main points if needed)
+2. Essential details (URLs, phone numbers, commands)
+3. Important notes and warnings
+4. Be thorough but avoid excessive explanations"""
         else:
             length_instruction = "\nProvide a complete, actionable solution following the expert response structure. Be specific, precise, and thorough."
         
@@ -347,8 +348,8 @@ User Question: {query}
         
         messages.append({"role": "user", "content": user_message})
         
-        # Adjust max_tokens for concise mode (400 tokens ≈ 800-900 chars)
-        max_tokens = 400 if concise_mode else settings.max_tokens
+        # Adjust max_tokens for concise mode (600 tokens ≈ 1200-1500 chars)
+        max_tokens = 600 if concise_mode else settings.max_tokens
         
         # Generate response with higher quality settings
         response = self.openai_client.chat.completions.create(

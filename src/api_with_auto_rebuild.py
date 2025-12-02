@@ -331,9 +331,9 @@ async def salesiq_webhook(request: Request):
                 print(f"📚 KB Sources: {len(result.get('sources', []))}")
                 print(f"✅ Initial Response Length: {len(ai_response)} chars")
                 
-                # If response is too long, regenerate in concise mode
-                if len(ai_response) > 1000:
-                    print(f"⚠️ Response too long, regenerating in concise mode...")
+                # If response is too long (over 1800 chars), regenerate in concise mode
+                if len(ai_response) > 1800:
+                    print(f"⚠️ Response too long ({len(ai_response)} chars), regenerating in concise mode...")
                     result = rag_engine.process_query_expert(
                         message,
                         conversation_history=conversation_history,
@@ -341,6 +341,8 @@ async def salesiq_webhook(request: Request):
                     )
                     ai_response = result.get("response", "").strip()
                     print(f"✅ Concise Response Length: {len(ai_response)} chars")
+                else:
+                    print(f"✅ Response length OK - sending full detailed answer")
                 
                 print(f"{'='*60}\n")
                 
@@ -381,11 +383,11 @@ async def salesiq_webhook(request: Request):
         while "  " in ai_response:
             ai_response = ai_response.replace("  ", " ")
         
-        # SalesIQ has a character limit - truncate if too long
-        MAX_SALESIQ_LENGTH = 1000  # Safe limit for SalesIQ
+        # SalesIQ character limit - truncate only if extremely long
+        MAX_SALESIQ_LENGTH = 1900  # Allow detailed responses up to ~2000 chars
         if len(ai_response) > MAX_SALESIQ_LENGTH:
-            print(f"⚠️ Response too long ({len(ai_response)} chars), truncating to {MAX_SALESIQ_LENGTH}")
-            ai_response = ai_response[:MAX_SALESIQ_LENGTH-50] + "... For more details, please contact support@acecloudhosting.com or call 1-888-415-5240."
+            print(f"⚠️ Response still too long ({len(ai_response)} chars), truncating to {MAX_SALESIQ_LENGTH}")
+            ai_response = ai_response[:MAX_SALESIQ_LENGTH-100] + "... For complete details, please contact support@acecloudhosting.com or call 1-888-415-5240."
         
         # Remove any problematic characters
         ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
