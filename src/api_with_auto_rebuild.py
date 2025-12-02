@@ -365,6 +365,15 @@ async def salesiq_webhook(request: Request):
         while "  " in ai_response:
             ai_response = ai_response.replace("  ", " ")
         
+        # SalesIQ has a character limit - truncate if too long
+        MAX_SALESIQ_LENGTH = 1000  # Safe limit for SalesIQ
+        if len(ai_response) > MAX_SALESIQ_LENGTH:
+            print(f"⚠️ Response too long ({len(ai_response)} chars), truncating to {MAX_SALESIQ_LENGTH}")
+            ai_response = ai_response[:MAX_SALESIQ_LENGTH-50] + "... For more details, please contact support@acecloudhosting.com or call 1-888-415-5240."
+        
+        # Remove any problematic characters
+        ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
+        
         # Final validation - ensure we have a response
         if not ai_response or len(ai_response) < 10:
             print(f"⚠️ Empty response detected! Original length: {len(ai_response)}")
@@ -376,11 +385,17 @@ async def salesiq_webhook(request: Request):
         sessions[session_key].append({"role": "user", "content": message})
         sessions[session_key].append({"role": "assistant", "content": ai_response})
         
-        return {
+        # Build response
+        salesiq_response = {
             "action": "reply",
             "replies": [ai_response],
             "session_id": session_id
         }
+        
+        # Log the actual response being sent
+        print(f"📨 SalesIQ Response: {json.dumps(salesiq_response, ensure_ascii=False)[:200]}...")
+        
+        return salesiq_response
         
     except Exception as e:
         print(f"[SalesIQ] ERROR: {str(e)}")
