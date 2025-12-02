@@ -168,6 +168,8 @@ RESPONSE STYLE:
 - If the user asks for information (pricing, steps, etc.), give it directly
 - Be helpful, friendly, and concise
 - Include all relevant details in your first response
+- DO NOT start responses with "Hello! I'm AceBuddy" - only use that for initial greetings
+- For thank you messages (thanks, thank you, helpful, etc.), respond with: "You're welcome! Feel free to reach out if you need anything else."
 
 CRITICAL KNOWLEDGE BASE:
 
@@ -332,70 +334,78 @@ async def salesiq_webhook(request: Request):
         if not message or len(message.strip()) == 0:
             ai_response = "Hello! I'm AceBuddy. How can I assist you today?"
         else:
-            session_key = f"salesiq_{session_id}"
-            if session_key not in sessions:
-                sessions[session_key] = []
+            # Check if message is a thank you / acknowledgment
+            thank_you_phrases = ["thanks", "thank you", "helpful", "great", "perfect", "awesome", "appreciate"]
+            message_lower = message.lower().strip()
             
-            conversation_history = sessions[session_key][-10:]
-            
-            # Try RAG first
-            if USE_RAG and rag_engine:
-                try:
-                    # Generate response
-                    result = rag_engine.process_query_expert(
-                        message,
-                        conversation_history=conversation_history,
-                        concise_mode=False
-                    )
-                    ai_response = result.get("response", "").strip()
-                    
-                    print(f"✅ RAG Response Length: {len(ai_response)} chars")
-                    
-                    # If too long, regenerate concisely
-                    if len(ai_response) > 1800:
-                        print(f"⚠️ Too long, regenerating...")
+            # If it's just a thank you (short message with thank you phrase)
+            if len(message_lower.split()) <= 3 and any(phrase in message_lower for phrase in thank_you_phrases):
+                ai_response = "You're welcome! Feel free to reach out if you need anything else. 😊"
+            else:
+                session_key = f"salesiq_{session_id}"
+                if session_key not in sessions:
+                    sessions[session_key] = []
+                
+                conversation_history = sessions[session_key][-10:]
+                
+                # Try RAG first
+                if USE_RAG and rag_engine:
+                    try:
+                        # Generate response
                         result = rag_engine.process_query_expert(
                             message,
                             conversation_history=conversation_history,
-                            concise_mode=True
+                            concise_mode=False
                         )
                         ai_response = result.get("response", "").strip()
-                        print(f"✅ Concise: {len(ai_response)} chars")
                         
-                except Exception as e:
-                    print(f"❌ RAG Error: {e}")
-                    # Fallback to simple prompt
-                    try:
-                        messages = [{"role": "system", "content": ENHANCED_PROMPT + "\n\nBe concise (under 1500 chars)."}]
-                        messages.extend(conversation_history[-5:])
-                        messages.append({"role": "user", "content": message})
+                        print(f"✅ RAG Response Length: {len(ai_response)} chars")
                         
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=messages,
-                            temperature=0.3,
-                            max_tokens=500
-                        )
-                        ai_response = response.choices[0].message.content.strip()
-                    except Exception as e2:
-                        print(f"❌ Fallback Error: {e2}")
-                        ai_response = "I'm experiencing technical difficulties. Please contact support@acecloudhosting.com or call 1-888-415-5240."
-            
-            # Clean response
-            ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").strip()
-            while "  " in ai_response:
-                ai_response = ai_response.replace("  ", " ")
-            
-            # Truncate if needed
-            if len(ai_response) > 1900:
-                ai_response = ai_response[:1800] + "... Contact support@acecloudhosting.com or 1-888-415-5240 for more details."
-            
-            # Remove problematic chars
-            ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
-            
-            # Update history
-            sessions[session_key].append({"role": "user", "content": message})
-            sessions[session_key].append({"role": "assistant", "content": ai_response})
+                        # If too long, regenerate concisely
+                        if len(ai_response) > 1800:
+                            print(f"⚠️ Too long, regenerating...")
+                            result = rag_engine.process_query_expert(
+                                message,
+                                conversation_history=conversation_history,
+                                concise_mode=True
+                            )
+                            ai_response = result.get("response", "").strip()
+                            print(f"✅ Concise: {len(ai_response)} chars")
+                            
+                    except Exception as e:
+                        print(f"❌ RAG Error: {e}")
+                        # Fallback to simple prompt
+                        try:
+                            messages = [{"role": "system", "content": SALESIQ_PROMPT + "\n\nBe concise (under 1500 chars)."}]
+                            messages.extend(conversation_history[-5:])
+                            messages.append({"role": "user", "content": message})
+                            
+                            response = client.chat.completions.create(
+                                model="gpt-4o-mini",
+                                messages=messages,
+                                temperature=0.3,
+                                max_tokens=500
+                            )
+                            ai_response = response.choices[0].message.content.strip()
+                        except Exception as e2:
+                            print(f"❌ Fallback Error: {e2}")
+                            ai_response = "I'm experiencing technical difficulties. Please contact support@acecloudhosting.com or call 1-888-415-5240."
+                
+                # Clean response
+                ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").strip()
+                while "  " in ai_response:
+                    ai_response = ai_response.replace("  ", " ")
+                
+                # Truncate if needed
+                if len(ai_response) > 1900:
+                    ai_response = ai_response[:1800] + "... Contact support@acecloudhosting.com or 1-888-415-5240 for more details."
+                
+                # Remove problematic chars
+                ai_response = ai_response.replace('"', "'").replace('\r', '').replace('\t', ' ')
+                
+                # Update history
+                sessions[session_key].append({"role": "user", "content": message})
+                sessions[session_key].append({"role": "assistant", "content": ai_response})
         
         # ALWAYS return valid response - ensure it's not empty
         final_response = ai_response if (ai_response and len(ai_response) > 0) else "How can I help you?"
