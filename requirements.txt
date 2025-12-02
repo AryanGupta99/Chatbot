@@ -8,3 +8,6 @@ python-multipart==0.0.6
 # OpenAI with compatible httpx
 openai==1.10.0
 httpx==0.25.2
+
+# Vector database for RAG
+chromadb==0.4.22
