@@ -11,3 +11,4 @@ httpx==0.25.2
 
 # Vector database for RAG
 chromadb==0.4.22
+numpy<2.0.0
