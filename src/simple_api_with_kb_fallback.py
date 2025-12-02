@@ -1,6 +1,6 @@
 """
-Simple Working API for Zoho SalesIQ webhook
-Uses OpenAI directly with expert prompts (no vector store needed)
+BULLETPROOF API - Works on Render with KB docs
+Falls back to simple prompt if ChromaDB fails
 """
 import os
 from datetime import datetime
@@ -13,8 +13,8 @@ import uvicorn
 
 app = FastAPI(
     title="AceBuddy API",
-    version="2.0.0",
-    description="SalesIQ webhook with OpenAI"
+    version="3.0.0",
+    description="Bulletproof API with KB fallback"
 )
 
 # CORS
@@ -32,6 +32,27 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Session storage
 sessions: Dict[str, list] = {}
 
+# Try to load RAG engine, fallback to simple prompt
+USE_RAG = False
+rag_engine = None
+
+try:
+    import sys
+    from pathlib import Path
+    current_dir = Path(__file__).parent
+    parent_dir = current_dir.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    
+    from src.expert_rag_engine import ExpertRAGEngine
+    rag_engine = ExpertRAGEngine()
+    USE_RAG = True
+    print("✅ RAG engine loaded - using KB docs!")
+except Exception as e:
+    print(f"⚠️ RAG engine failed: {e}")
+    print("✅ Falling back to simple prompt")
+    USE_RAG = False
+
 class ChatRequest(BaseModel):
     message: str
     conversation_id: str = "default"
@@ -40,8 +61,8 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
 
-# Expert system prompt with all KB knowledge
-EXPERT_PROMPT = """You are AceBuddy, an expert IT support assistant for ACE Cloud Hosting.
+# Enhanced prompt with more KB knowledge
+ENHANCED_PROMPT = """You are AceBuddy, an expert IT support assistant for ACE Cloud Hosting.
 
 CONVERSATIONAL APPROACH:
 - FIRST RESPONSE: Ask 1-2 clarifying questions to understand the situation better
@@ -62,7 +83,7 @@ You: "I can assist with QuickBooks issues. What's the specific error code or mes
 User: "Can't connect to RDP"
 You: "I'll help you troubleshoot this. Are you connecting from Windows or Mac? And what error message are you seeing?"
 
-User: "What's your phone number?" or "How do I contact support?" or "Give me support number"
+User: "What's your phone number?" or "How do I contact support?"
 You: "You can reach our support team at: Phone: 1-888-415-5240 | Email: support@acecloudhosting.com | Chat: Right here! How can I help you today?"
 
 CRITICAL KNOWLEDGE BASE:
@@ -155,7 +176,8 @@ async def root():
     return {
         "status": "healthy",
         "service": "AceBuddy API",
-        "version": "2.0.0",
+        "version": "3.0.0",
+        "using_rag": USE_RAG,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -164,12 +186,13 @@ async def health():
     return {
         "status": "healthy",
         "active_sessions": len(sessions),
+        "using_rag": USE_RAG,
         "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    """Chat endpoint"""
+    """Chat endpoint with RAG fallback"""
     try:
         # Get conversation history
         if request.conversation_id not in sessions:
@@ -177,20 +200,41 @@ async def chat(request: ChatRequest):
         
         conversation_history = sessions[request.conversation_id][-10:]
         
-        # Build messages
-        messages = [{"role": "system", "content": EXPERT_PROMPT}]
-        messages.extend(conversation_history)
-        messages.append({"role": "user", "content": request.message})
-        
-        # Get response
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages,
-            temperature=0.3,
-            max_tokens=500
-        )
-        
-        ai_response = response.choices[0].message.content.strip()
+        # Try RAG first, fallback to simple
+        if USE_RAG and rag_engine:
+            try:
+                result = rag_engine.process_query_expert(
+                    request.message,
+                    conversation_history=conversation_history
+                )
+                ai_response = result["response"]
+            except Exception as e:
+                print(f"RAG failed, using simple prompt: {e}")
+                # Fallback to simple prompt
+                messages = [{"role": "system", "content": ENHANCED_PROMPT}]
+                messages.extend(conversation_history)
+                messages.append({"role": "user", "content": request.message})
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    temperature=0.3,
+                    max_tokens=500
+                )
+                ai_response = response.choices[0].message.content.strip()
+        else:
+            # Use simple prompt
+            messages = [{"role": "system", "content": ENHANCED_PROMPT}]
+            messages.extend(conversation_history)
+            messages.append({"role": "user", "content": request.message})
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.3,
+                max_tokens=500
+            )
+            ai_response = response.choices[0].message.content.strip()
         
         # Update history
         sessions[request.conversation_id].append({"role": "user", "content": request.message})
@@ -204,22 +248,9 @@ async def chat(request: ChatRequest):
         print(f"[Chat Error] {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/webhook/salesiq/test")
-async def test_salesiq_webhook():
-    """Test endpoint"""
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    api_key_status = "configured" if api_key and len(api_key) > 10 else "NOT SET"
-    
-    return {
-        "status": "ok",
-        "message": "SalesIQ webhook endpoint is accessible",
-        "openai_api_key": api_key_status,
-        "timestamp": datetime.now().isoformat()
-    }
-
 @app.post("/webhook/salesiq")
 async def salesiq_webhook(request: Request):
-    """SalesIQ webhook"""
+    """SalesIQ webhook with RAG fallback"""
     try:
         payload = await request.json()
         print(f"[SalesIQ] Received: {payload}")
@@ -252,22 +283,44 @@ async def salesiq_webhook(request: Request):
         
         conversation_history = sessions[session_key][-10:]
         
-        # Build messages
-        messages = [{"role": "system", "content": EXPERT_PROMPT}]
-        messages.extend(conversation_history)
-        messages.append({"role": "user", "content": message})
-        
-        print(f"[SalesIQ] Calling OpenAI...")
-        
-        # Get response
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages,
-            temperature=0.3,
-            max_tokens=500
-        )
-        
-        ai_response = response.choices[0].message.content.strip()
+        # Try RAG first, fallback to simple
+        if USE_RAG and rag_engine:
+            try:
+                result = rag_engine.process_query_expert(
+                    message,
+                    conversation_history=conversation_history
+                )
+                ai_response = result["response"]
+                print(f"[SalesIQ] Using RAG engine")
+            except Exception as e:
+                print(f"[SalesIQ] RAG failed, using simple prompt: {e}")
+                # Fallback to simple prompt
+                messages = [{"role": "system", "content": ENHANCED_PROMPT}]
+                messages.extend(conversation_history)
+                messages.append({"role": "user", "content": message})
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    temperature=0.3,
+                    max_tokens=500
+                )
+                ai_response = response.choices[0].message.content.strip()
+        else:
+            # Use simple prompt
+            messages = [{"role": "system", "content": ENHANCED_PROMPT}]
+            messages.extend(conversation_history)
+            messages.append({"role": "user", "content": message})
+            
+            print(f"[SalesIQ] Using simple prompt")
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.3,
+                max_tokens=500
+            )
+            ai_response = response.choices[0].message.content.strip()
         
         # Clean for SalesIQ
         ai_response = ai_response.replace("**", "").replace("*", "").replace("\n", " ").replace("  ", " ")
@@ -298,9 +351,17 @@ async def get_stats():
     return {
         "active_sessions": len(sessions),
         "total_messages": sum(len(msgs) for msgs in sessions.values()),
+        "using_rag": USE_RAG,
         "timestamp": datetime.now().isoformat()
     }
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
+    print("="*70)
+    print("🚀 Starting AceBuddy API")
+    if USE_RAG:
+        print("✅ Using RAG engine with KB docs")
+    else:
+        print("✅ Using enhanced prompt (RAG unavailable)")
+    print("="*70)
     uvicorn.run(app, host="0.0.0.0", port=port)
