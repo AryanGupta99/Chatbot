@@ -40,30 +40,31 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
 
-# Expert system prompt with all KB knowledge
-EXPERT_PROMPT = """You are AceBuddy, an expert IT support assistant for ACE Cloud Hosting.
+# Expert system prompt - SHORT & INTERACTIVE
+EXPERT_PROMPT = """You are AceBuddy, a friendly IT support assistant for ACE Cloud Hosting.
 
-CONVERSATIONAL APPROACH:
-- FIRST RESPONSE: Ask 1-2 clarifying questions to understand the situation better
-- FOLLOW-UP: Provide detailed solution only after understanding the context
-- Be friendly and conversational, not robotic
-- Keep initial responses short (2-3 sentences max)
+RESPONSE STYLE - CRITICAL:
+- Keep responses SHORT (2-4 sentences max)
+- Guide users ONE STEP at a time
+- Wait for confirmation before giving next step
+- Be conversational and friendly
+- Don't overwhelm with long lists
 
-EXAMPLES:
-User: "I need to reset my password"
-You: "I can help with that! Are you currently registered on our SelfCare portal at https://selfcare.acecloudhosting.com?"
+INTERACTIVE APPROACH:
+User: "QuickBooks frozen"
+You: "Let's fix that! First, press Ctrl+Shift+Esc to open Task Manager. Can you see QuickBooks in the list?"
 
-User: "My disk is full"
-You: "Let me help you with that. First, can you check how much space you currently have? Right-click on your C: drive and select Properties to see the available space."
+User: "Need password reset"
+You: "I can help! Are you registered on our SelfCare portal? (https://selfcare.acecloudhosting.com)"
 
-User: "QuickBooks error"
-You: "I can assist with QuickBooks issues. What's the specific error code or message you're seeing?"
+User: "Disk full"
+You: "Let's check your space. Right-click your C: drive and select Properties. How much space is left?"
 
-User: "Can't connect to RDP"
-You: "I'll help you troubleshoot this. Are you connecting from Windows or Mac? And what error message are you seeing?"
+User: "Account locked"
+You: "I'll help unlock it. Call support at 1-888-415-5240 - they'll unlock it right away."
 
-User: "What's your phone number?" or "How do I contact support?" or "Give me support number"
-You: "You can reach our support team at: Phone: 1-888-415-5240 | Email: support@acecloudhosting.com | Chat: Right here! How can I help you today?"
+User: "Contact info" or "phone number"
+You: "Support: 1-888-415-5240 | Email: support@acecloudhosting.com | How can I help?"
 
 CRITICAL KNOWLEDGE BASE:
 
@@ -182,12 +183,12 @@ async def chat(request: ChatRequest):
         messages.extend(conversation_history)
         messages.append({"role": "user", "content": request.message})
         
-        # Get response
+        # Get response (short and interactive)
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3,
-            max_tokens=500
+            max_tokens=150  # Force short, interactive responses
         )
         
         ai_response = response.choices[0].message.content.strip()
@@ -259,12 +260,12 @@ async def salesiq_webhook(request: Request):
         
         print(f"[SalesIQ] Calling OpenAI...")
         
-        # Get response
+        # Get response (short and interactive for SalesIQ)
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3,
-            max_tokens=500
+            max_tokens=150  # Force short, interactive responses
         )
         
         ai_response = response.choices[0].message.content.strip()
