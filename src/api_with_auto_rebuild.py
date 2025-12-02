@@ -237,6 +237,19 @@ async def chat(request: ChatRequest):
                     conversation_history=conversation_history
                 )
                 ai_response = result["response"]
+                
+                # LOG PROOF OF RAG USAGE
+                print(f"\n{'='*60}")
+                print(f"🔍 RAG QUERY: {request.message[:100]}")
+                print(f"📂 Category: {result.get('category', 'N/A')}")
+                print(f"📚 KB Sources Used: {len(result.get('sources', []))}")
+                print(f"🎯 Confidence: {result.get('confidence', 'N/A')}")
+                if result.get('sources'):
+                    for i, src in enumerate(result['sources'][:3], 1):
+                        print(f"   [{i}] Category: {src.get('category', 'N/A')}, Score: {src.get('relevance', 0):.3f}")
+                        print(f"       ID: {src.get('id', 'N/A')[:50]}")
+                print(f"✅ Response: {ai_response[:150]}...")
+                print(f"{'='*60}\n")
             except Exception as e:
                 print(f"RAG failed: {e}, using fallback")
                 messages = [{"role": "system", "content": ENHANCED_PROMPT}]
@@ -307,6 +320,13 @@ async def salesiq_webhook(request: Request):
                     conversation_history=conversation_history
                 )
                 ai_response = result["response"]
+                
+                # LOG PROOF OF RAG USAGE (SalesIQ)
+                print(f"\n{'='*60}")
+                print(f"🔍 SALESIQ RAG: {message[:100]}")
+                print(f"📂 Category: {result.get('category', 'N/A')}")
+                print(f"📚 KB Sources: {len(result.get('sources', []))}")
+                print(f"{'='*60}\n")
             except Exception as e:
                 print(f"RAG failed: {e}")
                 messages = [{"role": "system", "content": ENHANCED_PROMPT}]
