@@ -252,6 +252,93 @@ Step 5: Go to Chrome apps, click Xtralogic RDP icon
 Step 6: Sign in with Gmail if prompted, allow access
 Support: 1-888-415-5240
 
+**QB Multi-user Error (-6098, 5):**
+Step 1: Shut down QuickBooks
+Step 2: Open QuickBooks Tool Hub
+Step 3: Choose "Program Issues"
+Step 4: Click "Quick Fix my Program"
+Step 5: Restart QuickBooks
+Support: 1-888-415-5240
+
+**QB Bank Feeds Error (-3371):**
+Step 1: Open QuickBooks, go to Banking menu
+Step 2: Select "Bank Feeds" → "Bank Feeds Center"
+Step 3: Click "Import" button
+Step 4: Select your bank feed file
+Step 5: Follow import wizard
+If fails: Run QB File Doctor tool
+Support: 1-888-415-5240
+
+**QB Payroll Update Errors:**
+Step 1: Open QuickBooks
+Step 2: Go to Employees → Get Payroll Updates
+Step 3: Select "Download Entire Update"
+Step 4: Click "Update" button
+Step 5: Wait for download to complete
+If error persists: Call 1-888-415-5240
+
+**Reset QB Admin Password:**
+Step 1: Close QuickBooks
+Step 2: Press Ctrl+1 while opening company file
+Step 3: Select "Admin" user
+Step 4: Leave password blank, click OK
+Step 5: Set new password
+Support: 1-888-415-5240
+
+**Create QB Company File:**
+Step 1: Open QuickBooks
+Step 2: Go to File → New Company
+Step 3: Click "Express Start" or "Detailed Start"
+Step 4: Enter company information
+Step 5: Click "Create Company"
+Support: 1-888-415-5240
+
+**Setup Email in QB:**
+Step 1: Open QuickBooks, go to Edit → Preferences
+Step 2: Select "Send Forms" → Company Preferences
+Step 3: Click "Add" to add email account
+Step 4: Enter email settings (SMTP, port, credentials)
+Step 5: Click "OK" to save
+Support: 1-888-415-5240
+
+**QB Error 15212/12159:**
+Step 1: Close QuickBooks
+Step 2: Download Digital Signature Certificate
+Step 3: Right-click certificate, select "Install Certificate"
+Step 4: Follow installation wizard
+Step 5: Restart QuickBooks
+Support: 1-888-415-5240
+
+**QB Unrecoverable Errors:**
+Step 1: Close QuickBooks immediately
+Step 2: Open QuickBooks Tool Hub
+Step 3: Go to "Company File Issues"
+Step 4: Run "Quick Fix my File"
+Step 5: If persists, run "File Doctor"
+Support: 1-888-415-5240
+
+**Server Disconnection:**
+Step 1: Check internet connection on local PC
+Step 2: Run ping test to server
+Step 3: Check if other users can connect
+Step 4: Restart local router/modem
+Step 5: Try reconnecting to server
+Support: 1-888-415-5240
+
+**Setup QB WebConnector:**
+Step 1: Download QuickBooks WebConnector
+Step 2: Install and open WebConnector
+Step 3: Click "Add an Application"
+Step 4: Browse to .QWC file, select it
+Step 5: Enter password, click "OK"
+Support: 1-888-415-5240
+
+**RDP Error 0x204 (Mac):**
+Step 1: Check server address is correct
+Step 2: Verify internet connection
+Step 3: Try different network (mobile hotspot)
+If persists: Call 1-888-415-5240
+
 **PASSWORD RESET:**
 Step 1: Go to https://selfcare.acecloudhosting.com
 Step 2: Click "Forgot Password"
@@ -263,6 +350,10 @@ If not registered: Call 1-888-415-5240
 **ACCOUNT LOCKED:**
 Call support immediately: 1-888-415-5240
 They'll unlock within 5-10 minutes
+
+**DISK UPGRADE:**
+Tiers: 40GB ($10/mo), 80GB ($20/mo), 120GB ($30/mo), 200GB ($50/mo)
+Call 1-888-415-5240 to upgrade (takes 2-4 hours)
 
 **SUPPORT CONTACTS:**
 Phone: 1-888-415-5240
