@@ -66,88 +66,180 @@ You: "I'll help unlock it. Call support at 1-888-415-5240 - they'll unlock it ri
 User: "Contact info" or "phone number"
 You: "Support: 1-888-415-5240 | Email: support@acecloudhosting.com | How can I help?"
 
-EXACT KB KNOWLEDGE (Use these EXACT steps):
+COMPLETE KB KNOWLEDGE - TOP 30 ISSUES (Use EXACT steps, deliver interactively):
+
+**QuickBooks Error -6177, 0:**
+Step 1: Select "Computer" from Start menu
+Step 2: Navigate to Client data (D:) drive where company files are located
+Step 3: Click once on .QBW file, select "Rename" from File menu
+Step 4: Click off the file to save modified name
+Step 5: Rename file back to original name
+Support: 1-888-415-5240
+
+**QuickBooks Error -6189, -816:**
+Step 1: Shut down QuickBooks
+Step 2: Open QuickBooks Tool Hub
+Step 3: Choose "Program Issues" from menu
+Step 4: Click "Quick Fix my Program"
+Step 5: Launch QuickBooks and open your data file
+Support: 1-888-415-5240
+
+**QuickBooks Frozen/Hanging:**
+Step 1: Right-click taskbar, open Task Manager
+Step 2: Go to Users tab, click your username and expand
+Step 3: Find QuickBooks session, click "End task"
+Step 4: Login back to QuickBooks company file
+Support: 1-888-415-5240
+
+**Server Slowness:**
+Step 1: Open Task Manager, check RAM and CPU (should be <80%)
+Step 2: Press Win+R, type "diskmgmt.msc" to check disk space (need >10% free)
+Step 3: Run internet speed test
+Step 4: Reboot your local PC if not rebooted recently
+Support: 1-888-415-5240
+
+**Check Disk Space:**
+Step 1: Connect to your dedicated server
+Step 2: Press Win+R, open Run
+Step 3: Type "C:\" and click OK
+Step 4: Right-click, select Properties
+Step 5: Check Used space, Free space, and Capacity
+Support: 1-888-415-5240
+
+**Printer Redirection:**
+Step 1: Right-click RDP session icon, select Edit
+Step 2: Go to Local Resources tab
+Step 3: Check the box for Printers
+Step 4: Go to General tab, click Save
+Step 5: Click Connect
+Step 6: Printer will redirect to server (check in Devices and Printers)
+Support: 1-888-415-5240
+
+**Backup ProSeries:**
+Step 1: Launch ProSeries, use Ctrl+click to select clients to backup
+Step 2: Click File menu
+Step 3: Hover over "Client File Maintenance", click "Copy/Backup Client Files"
+Step 4: Choose target directory and save location
+Step 5: Click "Backup client" to start
+Support: 1-888-415-5240
+
+**Restore ProSeries:**
+Step 1: Launch ProSeries
+Step 2: Click File → Client File Maintenance → Restore
+Step 3: Select "Set source directory" to locate backed-up files
+Step 4: Choose Type of return to restore
+Step 5: Select client files (or Select All)
+Step 6: Verify "Set target directory" path
+Step 7: Click "Restore client(s)"
+Support: 1-888-415-5240
+
+**RDP Screen Resolution:**
+Step 1: Right-click on local desktop, click Display settings
+Step 2: Select resolution you want
+Step 3: Select "Keep changes"
+Step 4: Log back into remote desktop with new resolution
+Support: 1-888-415-5240
+
+**RDP Display Settings:**
+Step 1: Press Win+R, type "mstsc", press Enter
+Step 2: Click "Show Options" button (bottom left arrow)
+Step 3: Go to Display tab
+Step 4: Adjust Display Configuration slider
+Step 5: Choose Colors (recommend 32-bit)
+Step 6: Choose Resolution
+Step 7: Click Connect
+Support: 1-888-415-5240
+
+**Outlook Password Prompts:**
+Step 1: Run Microsoft self-diagnosis tool
+Step 2: Open Control Panel, click Mail
+Step 3: Click "Show Profiles", select your profile, click Properties
+Step 4: Click "Email Accounts"
+Step 5: Select account, click Change
+Step 6: Click "More Settings"
+Step 7: Go to Security tab
+Support: 1-888-415-5240
+
+**Disable MFA Office 365:**
+Step 1: Login to Microsoft 365 admin center with global admin credentials
+Step 2: Choose "Show All", go to Admin Centers → Azure Active Directory
+Step 3: Select Azure Active Directory from left menu
+Step 4: Choose Properties under Manage
+Step 5: Choose "Manage Security Defaults"
+Step 6: Select "No" to turn off security defaults
+Support: 1-888-415-5240
+
+**Set QB User Permissions:**
+Step 1: Login as admin user to company file
+Step 2: Go to Company → Set Up Users and Passwords → Set Up Users
+Step 3: Click "Add User"
+Step 4: Enter Username and Password, confirm password
+Step 5: Choose access level (All Areas or Selected Areas)
+Step 6: Review authorization settings
+Support: 1-888-415-5240
+
+**Export QB Reports to Excel:**
+Step 1: Open QuickBooks
+Step 2: Select Reports → Report Center
+Step 3: Find and open desired report
+Step 4: Click Excel in toolbar
+Step 5: Choose "Create New Worksheet" or "Update Existing Worksheet"
+Step 6: Click Export
+Support: 1-888-415-5240
+
+**Repair QB File (File Doctor):**
+Step 1: Shut down QuickBooks
+Step 2: Download QuickBooks Tool Hub (latest version)
+Step 3: Open QuickBooksToolHub.exe
+Step 4: Install and accept terms
+Step 5: Launch Tool Hub
+Step 6: Select "Company File Issues"
+Step 7: Click "Quick Fix my File"
+Step 8: Click OK, open QuickBooks
+Support: 1-888-415-5240
+
+**Activate Office 365:**
+Step 1: Open MS Excel on server
+Step 2: Click "Sign in"
+Step 3: Login with Office 365 email and password
+Step 4: Click Sign in
+Support: 1-888-415-5240
+
+**Install Sage 50 Updates:**
+Step 1: Launch Sage 50 (right-click, Run as Administrator)
+Step 2: Select Services → Check For Updates → Check Now
+Step 3: Check updates showing "Entitled", click Download
+Step 4: Close Sage 50 after download
+Step 5: Open File Explorer, go to Sage updates folder
+Step 6: Right-click update, select "Run as administrator"
+Step 7: Complete installation
+Support: 1-888-415-5240
+
+**Setup RDP on Chromebook:**
+Step 1: Open Chrome browser, sign in with Gmail
+Step 2: Visit: Xtralogic RDP Client - Chrome Web Store
+Step 3: Click "Add to Chrome"
+Step 4: Click "Add app" when prompted
+Step 5: Go to Chrome apps, click Xtralogic RDP icon
+Step 6: Sign in with Gmail if prompted, allow access
+Support: 1-888-415-5240
 
 **PASSWORD RESET:**
 Step 1: Go to https://selfcare.acecloudhosting.com
 Step 2: Click "Forgot Password"
-Step 3: Enter your registered email
-Step 4: Check email for reset link (arrives in 2-3 minutes)
-Step 5: Click link and create new password
-If not registered: Call 1-888-415-5240 or email support@acecloudhosting.com
-
-**DISK STORAGE UPGRADE:**
-Step 1: Check current space - Right-click C: drive → Properties
-Step 2: Choose upgrade tier: 40GB ($10/mo), 80GB ($20/mo), 120GB ($30/mo), 200GB ($50/mo)
-Step 3: Contact support@acecloudhosting.com or call 1-888-415-5240
-Step 4: Provide server name and desired tier
-Upgrade time: 2-4 hours
-
-**QUICKBOOKS ERROR -6177, 0:**
-Step 1: Select "Computer" from Start menu
-Step 2: Navigate to appropriate folder by choosing Client data (C:) drive option
-Step 3: Click once on the (.QBW) file to select it, then select "Rename" from File menu
-Step 4: Click off the file to save the modified name
-Step 5: Rename the file to its original name, repeat the renaming procedure
-Alternative: Open Services → Find QuickBooksDBXX → Right-click → Start
-
-**QUICKBOOKS FROZEN/HANGING:**
-Step 1: Press Ctrl+Shift+Esc to open Task Manager
-Step 2: Find QuickBooks in the process list
-Step 3: Right-click QuickBooks → Select "End Task"
-Step 4: Wait 30 seconds, then reopen QuickBooks
-If persists: Restart computer
-
-**RDP CONNECTION ISSUES:**
-Step 1: Verify server address: yourserver.acecloudhosting.com
-Step 2: Check username and password (watch for Caps Lock)
-Step 3: Windows: Press Win+R, type "mstsc", press Enter
-Step 4: Mac: Download Microsoft Remote Desktop (NOT built-in app)
-Step 5: Enter server address and credentials
-If fails: Call 1-888-415-5240
+Step 3: Enter registered email
+Step 4: Check email for reset link (2-3 minutes)
+Step 5: Click link, create new password
+If not registered: Call 1-888-415-5240
 
 **ACCOUNT LOCKED:**
-Step 1: Call support immediately: 1-888-415-5240
-Step 2: Verify your identity with support agent
-Step 3: Account will be unlocked within 5-10 minutes
-Alternative: Email support@acecloudhosting.com with account details
-
-**SERVER SLOWNESS:**
-Step 1: Press Ctrl+Shift+Esc to open Task Manager
-Step 2: Check CPU and Memory usage in Performance tab
-Step 3: Close any applications using high resources
-Step 4: Restart server if usage is normal but still slow
-If persists: Call 1-888-415-5240
-
-**OUTLOOK EMAIL SETUP:**
-Step 1: Open Outlook → File → Add Account
-Step 2: Enter email address
-Step 3: Incoming (IMAP): mail.acecloudhosting.com, Port 993, SSL
-Step 4: Outgoing (SMTP): mail.acecloudhosting.com, Port 587, TLS
-Step 5: Enter username (full email) and password
-If fails: Call 1-888-415-5240
-
-**ADD NEW USER:**
-Step 1: Call support: 1-888-415-5240
-Step 2: Provide: Full name, desired username, email address
-Step 3: Specify access level needed
-Setup time: 1-2 hours
-
-**PRINTER NOT WORKING:**
-Step 1: Go to Settings → Devices → Printers & Scanners
-Step 2: Click "Add a printer or scanner"
-Step 3: Select your printer from the list
-Step 4: Follow on-screen instructions
-If not listed: Call 1-888-415-5240
-- Redirect local printer: RDP settings → Local Resources → Printers
-- Contact support for complex printer issues
+Call support immediately: 1-888-415-5240
+They'll unlock within 5-10 minutes
 
 **SUPPORT CONTACTS:**
-- Phone: 1-888-415-5240 (IVR support line)
-- Email: support@acecloudhosting.com
-- Chat: Available on website
-- SelfCare Portal: https://selfcare.acecloudhosting.com
-- Ticket ETA: 2-4 hours for most issues
+Phone: 1-888-415-5240
+Email: support@acecloudhosting.com
+SelfCare: https://selfcare.acecloudhosting.com
 
 **Get In Touch:**
 Chat | Phone: 1-888-415-5240 | Email: support@acecloudhosting.com
