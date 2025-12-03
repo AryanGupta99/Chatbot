@@ -384,13 +384,14 @@ Step 2: Verify internet connection
 Step 3: Try different network (mobile hotspot)
 If persists: Call 1-888-415-5240
 
-**PASSWORD RESET:**
-Step 1: Go to https://selfcare.acecloudhosting.com
-Step 2: Click "Forgot Password"
-Step 3: Enter registered email
-Step 4: Check email for reset link (2-3 minutes)
-Step 5: Click link, create new password
-If not registered: Call 1-888-415-5240
+**PASSWORD RESET (SelfCare Portal):**
+Step 1: Visit https://selfcare.acecloudhosting.com
+Step 2: Click "Forgot your password"
+Step 3: Enter your Server Username
+Step 4: Enter the CAPTCHA verification and click Continue
+Step 5: Choose an authentication method from the list
+Step 6: Enter your new password and click Reset to finish
+If issues: Call 1-888-415-5240
 
 **ACCOUNT LOCKED:**
 Call support immediately: 1-888-415-5240
